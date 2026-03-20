@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar.jsx";
-import Dialog from "../components/Dialog.jsx";
 import { useToast } from "../components/Toast.jsx";
 import { useAuth } from "../store.jsx";
 import {
@@ -38,6 +37,11 @@ export default function Settings({ onNavigate }) {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
 
+  // Password visibility toggles
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+
   // ── Share defaults ────────────────────────────────────────
   const [defaultExpiry, setDefaultExpiry] = useState("24");
   const [defaultLimit, setDefaultLimit] = useState("0");
@@ -49,7 +53,7 @@ export default function Settings({ onNavigate }) {
   const [urlLoading, setUrlLoading] = useState(false);
 
   // ── Danger zone ───────────────────────────────────────────
-  const [dangerDialog, setDangerDialog] = useState(null); // 'revoke-all' | 'clear-expired'
+  const [dangerDialog, setDangerDialog] = useState(null);
   const [dangerInput, setDangerInput] = useState("");
   const [dangerLoading, setDangerLoading] = useState(false);
 
@@ -78,7 +82,6 @@ export default function Settings({ onNavigate }) {
   async function handleChangePassword(e) {
     e.preventDefault();
     setPwError("");
-
     if (!currentPw) {
       setPwError("Current password is required.");
       return;
@@ -105,6 +108,9 @@ export default function Settings({ onNavigate }) {
     setCurrentPw("");
     setNewPw("");
     setConfirmPw("");
+    setShowCurrentPw(false);
+    setShowNewPw(false);
+    setShowConfirmPw(false);
   }
 
   // ── Save share defaults ───────────────────────────────────
@@ -144,26 +150,16 @@ export default function Settings({ onNavigate }) {
   async function confirmDanger() {
     if (dangerInput !== "confirm") return;
     setDangerLoading(true);
-
     const fn = dangerDialog === "revoke-all" ? revokeAllShares : clearExpired;
     const { data, error } = await fn();
-
     setDangerLoading(false);
     setDangerDialog(null);
     setDangerInput("");
-
     if (error) {
       showToast(error, "error");
       return;
     }
     showToast(data.message, "success");
-  }
-
-  // ── Logout ────────────────────────────────────────────────
-  async function handleLogout() {
-    await logout();
-    clearToken();
-    onNavigate("login");
   }
 
   if (loading)
@@ -195,41 +191,41 @@ export default function Settings({ onNavigate }) {
             )}
             <div className="settings-grid">
               <Field label="Current Password">
-                <input
-                  className="form-input"
-                  type="password"
-                  placeholder="••••••••"
+                <PasswordInput
                   value={currentPw}
+                  show={showCurrentPw}
+                  onToggle={() => setShowCurrentPw((v) => !v)}
                   onChange={(e) => {
                     setCurrentPw(e.target.value);
                     setPwError("");
                   }}
+                  placeholder="••••••••"
                   autoComplete="current-password"
                 />
               </Field>
               <Field label="New Password">
-                <input
-                  className="form-input"
-                  type="password"
-                  placeholder="Min 8 characters"
+                <PasswordInput
                   value={newPw}
+                  show={showNewPw}
+                  onToggle={() => setShowNewPw((v) => !v)}
                   onChange={(e) => {
                     setNewPw(e.target.value);
                     setPwError("");
                   }}
+                  placeholder="Min 8 characters"
                   autoComplete="new-password"
                 />
               </Field>
               <Field label="Confirm New Password">
-                <input
-                  className="form-input"
-                  type="password"
-                  placeholder="Repeat new password"
+                <PasswordInput
                   value={confirmPw}
+                  show={showConfirmPw}
+                  onToggle={() => setShowConfirmPw((v) => !v)}
                   onChange={(e) => {
                     setConfirmPw(e.target.value);
                     setPwError("");
                   }}
+                  placeholder="Repeat new password"
                   autoComplete="new-password"
                 />
               </Field>
@@ -355,7 +351,7 @@ export default function Settings({ onNavigate }) {
                 value={storage.database.sizeHuman}
               />
               <InfoRow
-                label="ZIP temp directory"
+                label="ZIP temp dir"
                 value={storage.zipTempDir.path}
                 mono
               />
@@ -462,19 +458,134 @@ export default function Settings({ onNavigate }) {
 
 // ── Sub-components ────────────────────────────────────────
 
+/**
+ * Collapsible section card.
+ * Starts expanded by default, except danger zone which starts collapsed.
+ */
 function Section({ title, subtitle, children, danger }) {
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
     <div
       className={`settings-section-card ${danger ? "settings-section-card--danger" : ""}`}
     >
-      <div className="settings-section-card__header">
-        <div className="settings-section-card__title">{title}</div>
-        {subtitle && (
-          <div className="settings-section-card__subtitle">{subtitle}</div>
-        )}
+      <div
+        className="settings-section-card__header"
+        onClick={() => setCollapsed((c) => !c)}
+        style={{ cursor: "pointer", userSelect: "none" }}
+      >
+        <div style={{ flex: 1 }}>
+          <div className="settings-section-card__title">
+            {title}{" "}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              style={{
+                color: danger ? "var(--danger)" : "var(--text-3)",
+                flexShrink: 0,
+                transition: "transform 0.2s",
+                transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+              }}
+            >
+              <path
+                d="M3 6l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {subtitle && !collapsed && (
+            <div className="settings-section-card__subtitle">{subtitle}</div>
+          )}
+        </div>
       </div>
-      {<div className="settings-section-card__body">{children}</div>}
+      {!collapsed && (
+        <div className="settings-section-card__body">{children}</div>
+      )}
     </div>
+  );
+}
+
+/**
+ * Password input with show/hide toggle.
+ */
+function PasswordInput({
+  value,
+  show,
+  onToggle,
+  onChange,
+  placeholder,
+  autoComplete,
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        className="form-input"
+        type={show ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        autoComplete={autoComplete}
+        style={{ paddingRight: 40 }}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        tabIndex={-1}
+        style={{
+          position: "absolute",
+          right: 10,
+          top: "50%",
+          transform: "translateY(-50%)",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--text-3)",
+          padding: 2,
+          display: "flex",
+          alignItems: "center",
+        }}
+        title={show ? "Hide password" : "Show password"}
+      >
+        {show ? <EyeOffIcon /> : <EyeIcon />}
+      </button>
+    </div>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 2l12 12M6.5 6.6A2 2 0 0010 10"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4.2 4.3C2.5 5.4 1 8 1 8s3 5 7 5c1.4 0 2.7-.5 3.8-1.2M7 3.1C7.3 3 7.7 3 8 3c4 0 7 5 7 5s-.8 1.4-2 2.6"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

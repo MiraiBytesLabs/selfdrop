@@ -56,6 +56,9 @@ export default function CreateShare({ onNavigate }) {
   const [error, setError] = useState("");
   const [created, setCreated] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCreatedPw, setShowCreatedPw] = useState(false);
+  const [pwCopied, setPwCopied] = useState(false);
 
   // Auto-expand panel when a new file is added
   useEffect(() => {
@@ -158,6 +161,9 @@ export default function CreateShare({ onNavigate }) {
     setPanelCollapsed(false);
     setShareName("");
     setSettingsPanelCollapsed(false);
+    setShowPassword(false);
+    setShowCreatedPw(false);
+    setPwCopied(false);
   }
 
   // ── Success state ─────────────────────────────────────
@@ -255,12 +261,211 @@ export default function CreateShare({ onNavigate }) {
                   {created.downloadLimit ?? "Unlimited"}
                 </span>
               </div>
-              <div className="share-detail-row">
-                <span>Password protected</span>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 12 }}>
-                  {created.hasPassword ? "Yes" : "No"}
-                </span>
-              </div>
+              {created.hasPassword ? (
+                <div
+                  className="share-detail-row"
+                  style={{
+                    alignItems: "flex-start",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}
+                  >
+                    <span>Password</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--warning)",
+                        fontFamily: "var(--sans)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <circle
+                          cx="8"
+                          cy="8"
+                          r="6"
+                          stroke="currentColor"
+                          strokeWidth="1.3"
+                        />
+                        <path
+                          d="M8 5v3M8 10.5v.5"
+                          stroke="currentColor"
+                          strokeWidth="1.3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      Save this — you won't see it again
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      width: "100%",
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius)",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 13,
+                        flex: 1,
+                        letterSpacing: showCreatedPw ? 0 : "0.15em",
+                        color: "var(--text)",
+                        userSelect: showCreatedPw ? "text" : "none",
+                      }}
+                    >
+                      {showCreatedPw
+                        ? password
+                        : "•".repeat(Math.min(password.length, 12))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreatedPw((v) => !v)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "var(--text-3)",
+                        padding: 2,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      title={showCreatedPw ? "Hide" : "Show"}
+                    >
+                      {showCreatedPw ? (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M2 2l12 12M6.5 6.6A2 2 0 0010 10"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M4.2 4.3C2.5 5.4 1 8 1 8s3 5 7 5c1.4 0 2.7-.5 3.8-1.2M7 3.1C7.3 3 7.7 3 8 3c4 0 7 5 7 5s-.8 1.4-2 2.6"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                          />
+                          <circle
+                            cx="8"
+                            cy="8"
+                            r="2"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(password).then(() => {
+                          setPwCopied(true);
+                          setTimeout(() => setPwCopied(false), 2000);
+                        });
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: pwCopied ? "var(--accent)" : "var(--text-3)",
+                        padding: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: 11,
+                        fontFamily: "var(--mono)",
+                        gap: 4,
+                      }}
+                      title="Copy password"
+                    >
+                      {pwCopied ? (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M2 8l4 4 8-8"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <rect
+                            x="5"
+                            y="5"
+                            width="9"
+                            height="9"
+                            rx="1"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                          />
+                          <path
+                            d="M3 11H2a1 1 0 01-1-1V2a1 1 0 011-1h8a1 1 0 011 1v1"
+                            stroke="currentColor"
+                            strokeWidth="1.3"
+                          />
+                        </svg>
+                      )}
+                      {pwCopied ? "copied" : "copy"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="share-detail-row">
+                  <span>Password protected</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 12 }}>
+                    No
+                  </span>
+                </div>
+              )}
               <div className="share-detail-row">
                 <span>Filenames masked</span>
                 <span style={{ fontFamily: "var(--mono)", fontSize: 12 }}>
@@ -682,15 +887,80 @@ export default function CreateShare({ onNavigate }) {
                       />
                     </div>
                     {passwordEnabled && (
-                      <input
-                        className="input-small"
-                        type="password"
-                        placeholder="Set a password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ marginTop: 10 }}
-                        autoFocus
-                      />
+                      <div style={{ position: "relative", marginTop: 10 }}>
+                        <input
+                          className="input-small"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Set a password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          style={{ paddingRight: 36, width: "100%" }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          onClick={() => setShowPassword((v) => !v)}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "var(--text-3)",
+                            padding: 2,
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                          title={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                        >
+                          {showPassword ? (
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M2 2l12 12M6.5 6.6A2 2 0 0010 10"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                                strokeLinecap="round"
+                              />
+                              <path
+                                d="M4.2 4.3C2.5 5.4 1 8 1 8s3 5 7 5c1.4 0 2.7-.5 3.8-1.2M7 3.1C7.3 3 7.7 3 8 3c4 0 7 5 7 5s-.8 1.4-2 2.6"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                              />
+                              <circle
+                                cx="8"
+                                cy="8"
+                                r="2"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
 

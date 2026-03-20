@@ -754,7 +754,7 @@ tr:hover td     { background: var(--surface2); }
 .settings-section-card--danger .settings-section-card__header {
   background: var(--danger-light);
 }
-.settings-section-card__title    { font-size: 14px; font-weight: 500; }
+.settings-section-card__title    { font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; }
 .settings-section-card--danger .settings-section-card__title { color: var(--danger); }
 .settings-section-card__subtitle { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.5; }
 .settings-section-card__body     { padding: 20px; }

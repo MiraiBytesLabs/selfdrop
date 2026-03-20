@@ -62,10 +62,14 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────
-app.listen(config.port, () => {
-  console.log(`SelfDrop backend listening on port ${config.port}`);
-  console.log(`FILES_ROOT: ${config.filesRoot}`);
-  console.log(`DB_PATH:    ${config.dbPath}`);
-});
+// Only start the HTTP server when this file is run directly (not required by tests).
+// This allows supertest to import the app without binding to a port.
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log(`SelfDrop backend listening on port ${config.port}`);
+    console.log(`FILES_ROOT: ${config.filesRoot}`);
+    console.log(`DB_PATH:    ${config.dbPath}`);
+  });
+}
 
 module.exports = app;

@@ -12,8 +12,13 @@ const config = require("../config");
 const router = express.Router();
 
 // ── Startup ───────────────────────────────────────────────
-// Ensure temp ZIP directory exists
-fs.mkdirSync(config.zipTempDir, { recursive: true });
+// Ensure temp ZIP directory exists at module load time.
+// Also recreated lazily before each ZIP build in case config changed.
+try {
+  fs.mkdirSync(config.zipTempDir, { recursive: true });
+} catch {
+  /* already exists */
+}
 
 // ── Cleanup job ───────────────────────────────────────────
 // Runs every 5 minutes. Deletes temp ZIPs whose TTL has elapsed.
@@ -176,10 +181,10 @@ router.get("/:uuid", async (req, res) => {
 
   sharesDb.incrementDownloadCount(uuid);
 
-  // Determine display name — masked or real
-  const fileIndex = share.filePaths.indexOf(matchedPath);
+  // Determine display name — masked or real (single-file route)
+  const fileIndex = share.filePaths.indexOf(filePath);
   const displayName = share.maskFilenames
-    ? maskedFilename(share.uuid, path.basename(matchedPath), fileIndex)
+    ? maskedFilename(share.uuid, path.basename(filePath), fileIndex)
     : null;
 
   return serveFile(res, resolvedPath, displayName);
@@ -390,6 +395,9 @@ router.post("/:uuid/zip", async (req, res) => {
   const deleteAfter = Date.now() + ttlSeconds * 1000;
   const tempFilename = `selfdrop-${uuid}-${deleteAfter}.zip`;
   const tempPath = path.join(config.zipTempDir, tempFilename);
+
+  // Ensure temp dir exists (handles test env where config may reload)
+  fs.mkdirSync(config.zipTempDir, { recursive: true });
 
   // Build the ZIP — write to disk, never to memory
   try {

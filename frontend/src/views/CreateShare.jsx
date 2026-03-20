@@ -41,6 +41,7 @@ export default function CreateShare({ onNavigate }) {
   // Selected files: array of { path, entry } objects
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [settingsPanelCollapsed, setSettingsPanelCollapsed] = useState(true);
 
   // Share settings
   const [expiryPreset, setExpiryPreset] = useState(2); // 1 day
@@ -58,7 +59,7 @@ export default function CreateShare({ onNavigate }) {
 
   // Auto-expand panel when a new file is added
   useEffect(() => {
-    if (selectedFiles.length > 0) setPanelCollapsed(false);
+    if (selectedFiles.length === 0) setPanelCollapsed(false);
   }, [selectedFiles.length]);
 
   function handleSelect(path, entry) {
@@ -156,6 +157,7 @@ export default function CreateShare({ onNavigate }) {
     setMaskFilenames(false);
     setPanelCollapsed(false);
     setShareName("");
+    setSettingsPanelCollapsed(false);
   }
 
   // ── Success state ─────────────────────────────────────
@@ -579,114 +581,142 @@ export default function CreateShare({ onNavigate }) {
 
             {/* Share settings */}
             <div className="panel">
-              <div className="panel-header">
+              <div
+                className="panel-header"
+                style={{ cursor: "pointer", userSelect: "none" }}
+                onClick={() => setSettingsPanelCollapsed((c) => !c)}
+              >
                 <span className="panel-title">Share Settings</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  style={{
+                    color: "var(--text-3)",
+                    transition: "transform 0.2s",
+                    transform: settingsPanelCollapsed
+                      ? "rotate(-90deg)"
+                      : "rotate(0deg)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <path
+                    d="M3 6l5 5 5-5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
-              <div className="panel-body">
-                <div className="settings-section">
-                  <div className="settings-label">Expires after</div>
-                  <div className="expiry-grid">
-                    {EXPIRY_PRESETS.map((preset, i) => (
-                      <button
-                        key={i}
-                        className={`expiry-btn ${expiryPreset === i && !customExpiry ? "active" : ""}`}
-                        onClick={() => {
-                          setExpiryPreset(i);
-                          setCustomExpiry("");
-                        }}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    className="input-small"
-                    type="datetime-local"
-                    value={customExpiry}
-                    min={new Date(Date.now() + 60000)
-                      .toISOString()
-                      .slice(0, 16)}
-                    onChange={(e) => {
-                      setCustomExpiry(e.target.value);
-                      setExpiryPreset(null);
-                    }}
-                    style={{ marginTop: 6 }}
-                  />
-                </div>
-
-                <div className="settings-section">
-                  <div className="settings-label">Download limit</div>
-                  <input
-                    className="input-small"
-                    type="number"
-                    min="1"
-                    placeholder="Unlimited"
-                    value={downloadLimit}
-                    onChange={(e) => setDownloadLimit(e.target.value)}
-                  />
-                  <div className="form-hint" style={{ marginTop: 6 }}>
-                    Leave blank for unlimited.
-                  </div>
-                </div>
-
-                <div className="settings-section">
-                  <div className="settings-label">Protection</div>
-                  <div className="toggle-row">
-                    <div>
-                      <div style={{ fontSize: 13 }}>Password protect</div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: "var(--text-3)",
-                          marginTop: 2,
-                        }}
-                      >
-                        Recipient must enter a password
-                      </div>
+              {!settingsPanelCollapsed && (
+                <div className="panel-body">
+                  <div className="settings-section">
+                    <div className="settings-label">Expires after</div>
+                    <div className="expiry-grid">
+                      {EXPIRY_PRESETS.map((preset, i) => (
+                        <button
+                          key={i}
+                          className={`expiry-btn ${expiryPreset === i && !customExpiry ? "active" : ""}`}
+                          onClick={() => {
+                            setExpiryPreset(i);
+                            setCustomExpiry("");
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
                     </div>
-                    <div
-                      className={`toggle ${passwordEnabled ? "on" : ""}`}
-                      onClick={() => {
-                        setPasswordEnabled((p) => !p);
-                        setPassword("");
-                      }}
-                    />
-                  </div>
-                  {passwordEnabled && (
                     <input
                       className="input-small"
-                      type="password"
-                      placeholder="Set a password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      style={{ marginTop: 10 }}
-                      autoFocus
-                    />
-                  )}
-                </div>
-
-                <div className="settings-section">
-                  <div className="settings-label">Privacy</div>
-                  <div className="toggle-row">
-                    <div>
-                      <div style={{ fontSize: 13 }}>Mask filenames</div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: "var(--text-3)",
-                          marginTop: 2,
-                        }}
-                      >
-                        Recipient sees sdrop-xxxx-1.pdf instead of real names
-                      </div>
-                    </div>
-                    <div
-                      className={`toggle ${maskFilenames ? "on" : ""}`}
-                      onClick={() => setMaskFilenames((m) => !m)}
+                      type="datetime-local"
+                      value={customExpiry}
+                      min={new Date(Date.now() + 60000)
+                        .toISOString()
+                        .slice(0, 16)}
+                      onChange={(e) => {
+                        setCustomExpiry(e.target.value);
+                        setExpiryPreset(null);
+                      }}
+                      style={{ marginTop: 6 }}
                     />
                   </div>
+
+                  <div className="settings-section">
+                    <div className="settings-label">Download limit</div>
+                    <input
+                      className="input-small"
+                      type="number"
+                      min="1"
+                      placeholder="Unlimited"
+                      value={downloadLimit}
+                      onChange={(e) => setDownloadLimit(e.target.value)}
+                    />
+                    <div className="form-hint" style={{ marginTop: 6 }}>
+                      Leave blank for unlimited.
+                    </div>
+                  </div>
+
+                  <div className="settings-section">
+                    <div className="settings-label">Protection</div>
+                    <div className="toggle-row">
+                      <div>
+                        <div style={{ fontSize: 13 }}>Password protect</div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--text-3)",
+                            marginTop: 2,
+                          }}
+                        >
+                          Recipient must enter a password
+                        </div>
+                      </div>
+                      <div
+                        className={`toggle ${passwordEnabled ? "on" : ""}`}
+                        onClick={() => {
+                          setPasswordEnabled((p) => !p);
+                          setPassword("");
+                        }}
+                      />
+                    </div>
+                    {passwordEnabled && (
+                      <input
+                        className="input-small"
+                        type="password"
+                        placeholder="Set a password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        style={{ marginTop: 10 }}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+
+                  <div className="settings-section">
+                    <div className="settings-label">Privacy</div>
+                    <div className="toggle-row">
+                      <div>
+                        <div style={{ fontSize: 13 }}>Mask filenames</div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--text-3)",
+                            marginTop: 2,
+                          }}
+                        >
+                          Recipient sees sdrop-xxxx-1.pdf instead of real names
+                        </div>
+                      </div>
+                      <div
+                        className={`toggle ${maskFilenames ? "on" : ""}`}
+                        onClick={() => setMaskFilenames((m) => !m)}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <button

@@ -192,6 +192,9 @@ function ShareRow({ share, onCopy, onRevoke }) {
   const filename = share.filePaths?.[0]?.split("/").pop() || "—";
   const shortUuid = share.uuid.split("-")[0];
 
+  const isMultiFileShare = share.filePaths && share.filePaths.length > 1;
+  const isPasswordProtected = share.hasPassword;
+
   function handleCopy() {
     onCopy();
     setCopied(true);
@@ -216,9 +219,16 @@ function ShareRow({ share, onCopy, onRevoke }) {
         <div className="td-filename">
           <div className="file-icon">
             <FileTypeIcon
-              mimeType={getMimeTypeFromFilename(filename)}
+              mimeType={
+                isMultiFileShare
+                  ? "compressed"
+                  : getMimeTypeFromFilename(filename)
+              }
               size={14}
             />
+            {isPasswordProtected && (
+              <FileTypeIcon mimeType={"lock"} size={12} />
+            )}
           </div>
           <div style={{ minWidth: 0 }}>
             <div

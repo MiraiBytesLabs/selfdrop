@@ -87,7 +87,7 @@ export default function FileBrowser({
             color: "var(--text-3)",
           }}
         >
-          /data/files
+          /
         </span>
       </div>
 

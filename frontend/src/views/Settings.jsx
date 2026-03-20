@@ -473,7 +473,7 @@ function Section({ title, subtitle, children, danger }) {
           <div className="settings-section-card__subtitle">{subtitle}</div>
         )}
       </div>
-      <div className="settings-section-card__body">{children}</div>
+      {<div className="settings-section-card__body">{children}</div>}
     </div>
   );
 }

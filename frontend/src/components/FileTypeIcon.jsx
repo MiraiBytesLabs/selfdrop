@@ -135,6 +135,35 @@ export default function FileTypeIcon({
           />
         </svg>
       );
+    case "lock":
+      return (
+        <svg
+          width={s}
+          height={s}
+          viewBox="0 0 24 24"
+          fill="none"
+          className="file-icon-lock"
+        >
+          <rect
+            x="5"
+            y="11"
+            width="14"
+            height="10"
+            rx="2"
+            stroke={color}
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8 11V7a4 4 0 018 0v4"
+            stroke={color}
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="12" cy="16" r="1.5" fill={color} />
+        </svg>
+      );
     default:
       return (
         <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
@@ -163,5 +192,6 @@ export function getFileCategory(mimeType) {
     mimeType.includes("compressed")
   )
     return "archive";
+  if (mimeType == "lock") return "lock";
   return "generic";
 }

@@ -7,7 +7,7 @@ import { useAuth } from "../store.jsx";
 import FileTypeIcon, { getFileCategory } from "../components/FileTypeIcon.jsx";
 import { formatExpiry, isExpiringSoon } from "../utils/formatDate.js";
 import { getMimeTypeFromFilename } from "../utils/fileUtils.js";
-import { useShareUrl } from "../utils/useShareUrl.js";
+import { useShareUrl, buildShareUrl } from "../utils/useShareUrl.js";
 
 export default function Dashboard({ onNavigate }) {
   const [shares, setShares] = useState([]);

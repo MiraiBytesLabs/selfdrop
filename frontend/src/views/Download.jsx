@@ -237,13 +237,10 @@ export default function Download({ uuid }) {
   const files = shareInfo.files || [];
 
   return (
-    <div
-      className="download-wrap view-enter"
-      style={{ alignItems: "flex-start", padding: "40px 24px 100px" }}
-    >
-      <div className="download-card" style={{ maxWidth: 560 }}>
+    <div className="download-wrap download-wrap--list view-enter">
+      <div className="download-card download-card--list">
         {/* Header */}
-        <div className="download-header">
+        <div className="download-header download-header--list">
           <div className="download-branding">
             <Logo />
           </div>
@@ -481,66 +478,38 @@ export default function Download({ uuid }) {
         </ul>
 
         {/* Sticky footer */}
-        <div
-          style={{
-            position: "sticky",
-            bottom: 0,
-            background: "var(--surface)",
-            borderTop: "1px solid var(--border)",
-            padding: "14px 28px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--text-2)",
-              fontFamily: "var(--mono)",
-            }}
-          >
-            <strong style={{ color: "var(--text)" }}>
+        <div className="dl-footer">
+          <div className="dl-footer__info">
+            <strong>
               {selectedCount} of {totalFiles}
             </strong>{" "}
             selected
-            {selectedCount > 0 && ` · ${humanSize(selectedSize)}`}
+            {selectedCount > 0 && (
+              <span className="dl-footer__size">
+                {" "}
+                · {humanSize(selectedSize)}
+              </span>
+            )}
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div className="dl-footer__actions">
+            {zipError && <div className="dl-footer__error">{zipError}</div>}
             {selectedCount < totalFiles ? (
               <button
-                className="btn btn-ghost"
-                style={{ padding: "6px 10px", fontSize: 12 }}
+                className="btn btn-ghost dl-footer__btn"
                 onClick={selectAll}
               >
                 Select all
               </button>
             ) : (
               <button
-                className="btn btn-ghost"
-                style={{ padding: "6px 10px", fontSize: 12 }}
+                className="btn btn-ghost dl-footer__btn"
                 onClick={selectNone}
               >
                 Deselect all
               </button>
             )}
-            {zipError && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--danger)",
-                  fontFamily: "var(--mono)",
-                  maxWidth: 200,
-                  textAlign: "right",
-                }}
-              >
-                {zipError}
-              </div>
-            )}
-            <div
-              style={{ position: "relative" }}
+            <button
+              className="btn btn-secondary dl-footer__btn"
               title={
                 overLimit
                   ? `Selection exceeds ${humanSize(shareInfo.zipMaxBytes)} ZIP limit`
@@ -548,29 +517,25 @@ export default function Download({ uuid }) {
                     ? "Total share size exceeds ZIP limit"
                     : ""
               }
+              style={{
+                opacity: zipDisabled || overLimit ? 0.45 : 1,
+                cursor: zipDisabled || overLimit ? "not-allowed" : "pointer",
+              }}
+              onClick={downloadZip}
+              disabled={zipDisabled || overLimit || zipping}
             >
-              <button
-                className="btn btn-secondary"
-                style={{
-                  padding: "6px 12px",
-                  fontSize: 13,
-                  opacity: zipDisabled || overLimit ? 0.45 : 1,
-                  cursor: zipDisabled || overLimit ? "not-allowed" : "pointer",
-                }}
-                onClick={downloadZip}
-                disabled={zipDisabled || overLimit || zipping}
-              >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2"
-                    stroke="currentColor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                  />
-                </svg>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="dl-footer__zip-label">
                 {zipping ? "Building ZIP…" : "Download as ZIP"}
-              </button>
-            </div>
+              </span>
+            </button>
           </div>
         </div>
         {/* Branding footer */}

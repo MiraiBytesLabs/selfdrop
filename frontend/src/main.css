@@ -769,3 +769,228 @@ tr:hover td     { background: var(--surface2); }
 .danger-row__text  { flex: 1; min-width: 0; }
 .danger-row__title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
 .danger-row__desc  { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+
+/* ══════════════════════════════════════════════════════════
+   DOWNLOAD PAGE — RESPONSIVE
+   Breakpoints:
+     tablet landscape : ≤ 1024px
+     tablet portrait  : ≤ 768px
+     large phone      : ≤ 600px
+     phone            : ≤ 480px
+══════════════════════════════════════════════════════════ */
+
+/* ── Download list layout ────────────────────────────────── */
+.download-wrap--list {
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px 100px;
+}
+
+.download-card--list {
+  max-width: 560px;
+  width: 100%;
+}
+
+.download-header--list {
+  padding: 24px 28px 20px;
+}
+
+/* ── Download footer bar ─────────────────────────────────── */
+.dl-footer {
+  position: sticky; bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dl-footer__info {
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.dl-footer__info strong { color: var(--text); }
+.dl-footer__size { color: var(--text-3); }
+
+.dl-footer__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dl-footer__error {
+  font-size: 11px;
+  color: var(--danger);
+  font-family: var(--mono);
+  max-width: 200px;
+  text-align: right;
+}
+
+.dl-footer__btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  /* Minimum 44px tap target on mobile */
+  min-height: 36px;
+}
+
+/* ── Tablet landscape (≤ 1024px) ─────────────────────────── */
+@media (max-width: 1024px) {
+  .download-wrap--list { padding: 32px 20px 80px; }
+  .download-card--list  { max-width: 540px; }
+}
+
+/* ── Tablet portrait (≤ 768px) ───────────────────────────── */
+@media (max-width: 768px) {
+  .download-wrap--list   { padding: 24px 16px 80px; }
+  .download-card--list   { max-width: 100%; border-radius: 10px; }
+  .download-header--list { padding: 20px 20px 16px; }
+
+  /* File rows — tighter padding */
+  .download-card--list ul li { padding-left: 16px !important; padding-right: 16px !important; }
+
+  /* Footer */
+  .dl-footer { padding: 10px 16px; }
+  .dl-footer__error { max-width: 160px; }
+
+  /* Preview modal — reduce side padding so arrows don't eat content */
+  .preview-modal { border-radius: 8px; }
+  .preview-modal__arrow--left  { left: 4px; }
+  .preview-modal__arrow--right { right: 4px; }
+}
+
+/* ── Large phone (≤ 600px) ───────────────────────────────── */
+@media (max-width: 600px) {
+  .download-wrap--list { padding: 16px 12px 80px; background: var(--bg); }
+  .download-card--list { border-radius: 8px; }
+  .download-header--list { padding: 16px 16px 14px; }
+
+  /* Filename — allow wrapping on small screens */
+  .download-filename { font-size: 14px; }
+
+  /* Meta items — stack if needed */
+  .download-meta { gap: 10px; flex-wrap: wrap; }
+  .download-meta-item { font-size: 11px; }
+
+  /* File rows */
+  .download-card--list ul li {
+    padding: 10px 16px !important;
+    gap: 10px !important;
+  }
+
+  /* Shrink file icon slightly */
+  .download-card--list ul li > div:nth-child(3) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  /* Footer — stack on very narrow */
+  .dl-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .dl-footer__actions { width: 100%; justify-content: flex-end; }
+  .dl-footer__error   { max-width: 100%; text-align: left; }
+
+  /* Preview modal — full width with minimal margin */
+  .preview-overlay { padding: 12px; }
+  .preview-modal   { border-radius: 8px; max-height: 95vh; }
+  .preview-modal__arrow { display: none; } /* arrows hidden on small screens — use strip instead */
+  .preview-modal__strip { padding: 8px 12px; }
+  .preview-modal__header { padding: 11px 14px; }
+  .preview-modal__title span { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Password card */
+  .download-card { border-radius: 8px; }
+}
+
+/* ── Phone (≤ 480px) ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .download-wrap--list { padding: 12px 8px 80px; }
+  .download-card--list { border-radius: 6px; border-left: none; border-right: none; }
+  .download-header--list { padding: 14px 14px 12px; }
+
+  /* Card goes edge to edge on phone */
+  .download-card--list  { border-radius: 0; max-width: 100%; }
+
+  .download-filename    { font-size: 13px; }
+
+  /* File rows — compact */
+  .download-card--list ul li {
+    padding: 9px 14px !important;
+    gap: 8px !important;
+  }
+
+  /* Action buttons — keep tap targets but tighten gap */
+  .download-card--list .icon-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  /* Footer */
+  .dl-footer { padding: 10px 14px; }
+  .dl-footer__btn { font-size: 12px; padding: 6px 10px; }
+
+  /* ZIP label — shorten on tiny screens */
+  .dl-footer__zip-label::before { content: 'ZIP'; }
+  .dl-footer__zip-label { display: none; }
+
+  /* Branding footer */
+  .download-wrap--list > div[style*="margin-top"] {
+    font-size: 10px;
+    padding: 0 8px;
+  }
+
+  /* Auth card (password prompt) */
+  .auth-wrap { padding: 16px 8px; }
+  .auth-card { padding: 24px 20px; border-radius: 8px; }
+
+  /* Preview modal — nearly fullscreen */
+  .preview-overlay { padding: 8px; align-items: flex-end; }
+  .preview-modal   { max-height: 92vh; border-radius: 12px 12px 0 0; }
+  .preview-audio   { padding: 24px 16px; }
+  .preview-image   { min-height: 240px; padding: 12px; }
+}
+
+/* ── Touch-friendly tap targets ──────────────────────────── */
+@media (max-width: 768px) {
+  /* Ensure all interactive rows meet 44px minimum */
+  .download-card--list ul li { min-height: 52px; }
+
+  /* Icon buttons larger on touch */
+  .icon-btn { width: 36px !important; height: 36px !important; }
+}
+
+/* ── Prevent horizontal scroll ───────────────────────────── */
+@media (max-width: 600px) {
+  .download-filename {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  /* Monospace filenames in file rows */
+  .download-card--list [style*="font-family: var(--mono)"],
+  .download-card--list [style*="fontFamily: 'var(--mono)'"] {
+    word-break: break-all;
+  }
+}
+
+/* Close button larger on mobile */
+@media (max-width: 480px) {
+  .preview-modal__btn--close {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  /* Thumbnail strip scrollable hint */
+  .preview-modal__strip::after {
+    content: '';
+    flex-shrink: 0;
+    width: 8px;
+  }
+}

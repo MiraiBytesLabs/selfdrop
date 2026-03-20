@@ -148,7 +148,7 @@ export default function PreviewModal({
               </svg>
             </button>
             <button
-              className="preview-modal__btn"
+              className="preview-modal__btn preview-modal__btn--close"
               onClick={onClose}
               title="Close (Esc)"
             >

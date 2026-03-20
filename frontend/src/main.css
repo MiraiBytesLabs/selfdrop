@@ -994,3 +994,187 @@ tr:hover td     { background: var(--surface2); }
     width: 8px;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN VIEWS — RESPONSIVE
+   Applies to: Dashboard, Create Share, Settings
+══════════════════════════════════════════════════════════ */
+
+/* ── Topbar ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar { padding: 0 16px; gap: 10px; }
+
+  /* Hide "New Share" button text — show icon only */
+  .topbar-right .btn span { display: none; }
+  .topbar-right .btn svg  { margin: 0; }
+  .topbar-right .btn      { padding: 6px 10px; min-width: 32px; }
+
+  /* Nav items shorter */
+  .topbar-nav-item { padding: 5px 8px; font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .topbar { height: 48px; }
+
+  /* Hide nav labels — only show active item */
+  .topbar-nav-item:not(.active) { display: none; }
+  .topbar-nav-item.active { font-size: 13px; }
+
+  /* Logo — hide text, keep mark */
+  .logo span { display: none; }
+}
+
+/* ── Dashboard ───────────────────────────────────────────── */
+
+/* Stats row */
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card  { padding: 12px 14px; }
+  .stat-value { font-size: 20px; }
+}
+
+/* Table — progressive column hiding */
+@media (max-width: 900px) {
+  /* Hide token column */
+  th:nth-child(2), td:nth-child(2) { display: none; }
+}
+
+@media (max-width: 768px) {
+  /* Hide expires column */
+  th:nth-child(5), td:nth-child(5) { display: none; }
+
+  /* Tighter table padding */
+  th, td { padding: 10px 12px; }
+
+  /* Filename cell — allow wrapping */
+  .td-filename { font-size: 11px; gap: 6px; }
+  .file-icon   { width: 24px; height: 24px; flex-shrink: 0; }
+}
+
+@media (max-width: 600px) {
+  /* Hide downloads column */
+  th:nth-child(4), td:nth-child(4) { display: none; }
+
+  /* Page header — stack */
+  .page-header { flex-direction: column; gap: 12px; }
+  .page-header .btn { align-self: flex-start; }
+
+  /* Admin content padding */
+  .admin-content { padding: 16px 14px; }
+}
+
+@media (max-width: 480px) {
+  th, td { padding: 9px 10px; }
+
+  /* Status badge — just a dot on very small screens */
+  .badge { padding: 2px 6px; font-size: 10px; }
+
+  /* Actions — tighter */
+  .td-actions { gap: 3px; }
+  .icon-btn   { width: 30px; height: 30px; }
+}
+
+/* ── Create Share ────────────────────────────────────────── */
+
+/* Stack browser + settings on tablet portrait and below */
+@media (max-width: 900px) {
+  .create-layout { grid-template-columns: 1fr; }
+  .settings-col  { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+  .settings-col > * { flex: 1; min-width: 280px; }
+  /* CTA button full width */
+  .settings-col > .btn { flex: none; width: 100%; min-width: 0; }
+}
+
+@media (max-width: 600px) {
+  .settings-col { flex-direction: column; }
+  .settings-col > * { min-width: 0; }
+
+  /* Expiry grid — 2 columns instead of 3 */
+  .expiry-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* File browser rows — tighter */
+  .file-row { padding: 8px 12px; }
+  .breadcrumb { padding: 8px 12px; font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  /* Share name input above layout */
+  .admin-content .form-input { font-size: 14px; }
+
+  /* Panel headers */
+  .panel-header { padding: 11px 14px; }
+  .panel-body   { padding: 12px 14px; }
+
+  /* File rows very compact */
+  .file-row { padding: 8px 10px; gap: 8px; }
+  .file-row-icon { width: 28px; height: 28px; }
+  .file-row-name { font-size: 11px; }
+  .file-row-meta { font-size: 10px; }
+  .file-row-size { font-size: 10px; }
+}
+
+/* ── Settings ────────────────────────────────────────────── */
+
+/* Settings page uses narrower content column */
+.admin-content--narrow { max-width: 680px; }
+@media (max-width: 768px) {
+  .admin-content--narrow { max-width: 100%; }
+}
+
+@media (max-width: 600px) {
+  /* Section cards */
+  .settings-section-card__body { padding: 16px; }
+  .settings-section-card__header { padding: 12px 16px; }
+
+  /* Info table — long paths truncate */
+  .info-row { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .info-row__value { text-align: left; font-size: 11px; }
+  .info-row__label { font-size: 12px; }
+
+  /* Danger rows — stack */
+  .danger-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .danger-row .btn { align-self: flex-end; }
+}
+
+@media (max-width: 480px) {
+  .settings-section-card__body   { padding: 14px 12px; }
+  .settings-section-card__header { padding: 10px 12px; }
+  .settings-section-card__title  { font-size: 13px; }
+
+  /* Password fields full width */
+  .settings-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* ── Auth cards (login, setup) ───────────────────────────── */
+@media (max-width: 480px) {
+  .auth-wrap { padding: 16px 12px; align-items: flex-start; padding-top: 40px; }
+  .auth-card { padding: 24px 20px; border-radius: 10px; }
+  .auth-title { font-size: 18px; }
+  .auth-subtitle { font-size: 12px; }
+}
+
+/* ── Avatar dropdown ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Keep dropdown from going off screen */
+  .avatar-menu { right: -8px; min-width: 150px; }
+}
+
+/* ── General admin utility ───────────────────────────────── */
+@media (max-width: 600px) {
+  /* Table card header */
+  .table-header { padding: 11px 14px; }
+  .table-title  { font-size: 12px; }
+
+  /* Empty state */
+  .empty-state { padding: 40px 16px; }
+}
+
+@media (max-width: 480px) {
+  /* Full-bleed table on phone */
+  .table-card { border-radius: 6px; }
+  th, td { padding: 8px 10px; font-size: 12px; }
+}

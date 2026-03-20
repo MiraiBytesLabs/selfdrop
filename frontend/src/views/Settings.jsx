@@ -177,7 +177,7 @@ export default function Settings({ onNavigate }) {
   return (
     <div className="admin-wrap view-enter">
       <Topbar active="settings" onNavigate={onNavigate} />
-      <div className="admin-content" style={{ maxWidth: 680 }}>
+      <div className="admin-content admin-content--narrow">
         <div className="page-header">
           <div>
             <div className="page-title">Settings</div>

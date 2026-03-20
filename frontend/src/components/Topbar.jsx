@@ -59,7 +59,7 @@ export default function Topbar({ active, onNavigate }) {
               strokeLinecap="round"
             />
           </svg>
-          New Share
+          <span>New Share</span>
         </button>
         <div
           className="avatar"

@@ -476,7 +476,13 @@ export default function CreateShare({ onNavigate }) {
                                 color="var(--accent)"
                               />
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                overflow: "hidden",
+                              }}
+                            >
                               <div
                                 style={{
                                   fontFamily: "var(--mono)",
@@ -484,6 +490,7 @@ export default function CreateShare({ onNavigate }) {
                                   whiteSpace: "nowrap",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
+                                  maxWidth: "60vw",
                                 }}
                               >
                                 {entry.name}

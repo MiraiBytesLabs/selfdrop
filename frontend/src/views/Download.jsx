@@ -300,8 +300,8 @@ export default function Download({ uuid }) {
           </div>
         </div>
 
-        {/* File list */}
-        <ul style={{ listStyle: "none" }}>
+        {/* File list — Fix: paddingTop/Bottom for breathing room */}
+        <ul style={{ listStyle: "none", padding: 4 }}>
           {files.map((file, i) => {
             const isSelected = selected.has(file.filename);
             return (
@@ -359,7 +359,7 @@ export default function Download({ uuid }) {
                   )}
                 </div>
 
-                {/* File icon / image thumbnail */}
+                {/* File icon */}
                 {file.mimeType?.startsWith("image/") ? (
                   <div
                     style={{
@@ -538,6 +538,7 @@ export default function Download({ uuid }) {
             </button>
           </div>
         </div>
+
         {/* Branding footer */}
         <div className="download-footer">
           <span>

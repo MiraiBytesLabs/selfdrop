@@ -407,6 +407,16 @@ tr:hover td     { background: var(--surface2); }
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 10px 12px;
   display: flex; align-items: center; gap: 10px;
+  min-width: 0; /* allow flex children to shrink */
+}
+/* Ensure the file info div inside can truncate */
+.selected-file-preview > div {
+  min-width: 0;
+}
+.selected-file-preview > div > div:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Success screen ──────────────────────────────────────── */
@@ -805,6 +815,16 @@ tr:hover td     { background: var(--surface2); }
 .download-header--list {
   padding: 24px 28px 20px;
   flex-shrink: 0;     /* never compress the header */
+}
+
+/* iOS safe area — adds padding above Safari's bottom toolbar */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .download-card--list .download-footer {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  .dl-footer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
 }
 
 /* Scrollable file list — grows to fill space between header and footer */

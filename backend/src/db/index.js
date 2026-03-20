@@ -55,6 +55,11 @@ const migrations = [
   `ALTER TABLE shares ADD COLUMN mask_filenames INTEGER NOT NULL DEFAULT 0`,
   // v1.2 — share name
   `ALTER TABLE shares ADD COLUMN name TEXT`,
+  // v1.3 — settings table
+  `CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`,
 ];
 
 for (const migration of migrations) {

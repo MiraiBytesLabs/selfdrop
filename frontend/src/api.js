@@ -40,6 +40,11 @@ export const setup = (username, password) =>
 export const login = (username, password) =>
   request("POST", "/api/auth/login", { username, password }, false);
 export const logout = () => request("POST", "/api/auth/logout");
+export const changePassword = (currentPassword, newPassword) =>
+  request("POST", "/api/auth/change-password", {
+    currentPassword,
+    newPassword,
+  });
 
 // ── Shares ────────────────────────────────────────────────
 export const listShares = () => request("GET", "/api/shares");
@@ -52,3 +57,10 @@ export const listDirectory = (path = "/") =>
   request("GET", `/api/fs?path=${encodeURIComponent(path)}`);
 export const getFileInfo = (path) =>
   request("GET", `/api/fs/info?path=${encodeURIComponent(path)}`);
+
+// ── Settings ──────────────────────────────────────────────
+export const getSettings = () => request("GET", "/api/settings");
+export const saveSettings = (body) => request("PUT", "/api/settings", body);
+export const getStorageInfo = () => request("GET", "/api/settings/storage");
+export const revokeAllShares = () => request("POST", "/api/admin/revoke-all");
+export const clearExpired = () => request("POST", "/api/admin/clear-expired");

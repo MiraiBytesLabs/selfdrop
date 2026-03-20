@@ -574,16 +574,24 @@ export default function Download({ uuid }) {
           </div>
         </div>
         {/* Branding footer */}
-        <div
-          style={{
-            margin: 16,
-            fontSize: 11,
-            color: "var(--text-3)",
-            textAlign: "center",
-            fontFamily: "var(--sans)",
-          }}
-        >
-          Shared securely via SelfDrop &middot; Self-hosted file sharing
+        <div className="download-footer">
+          <span>
+            Shared securely via{" "}
+            <a
+              href="https://github.com/MiraiBytesLabs/selfdrop"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--accent)", textDecoration: "none" }}
+              onMouseEnter={(e) =>
+                (e.target.style.textDecoration = "underline")
+              }
+              onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
+            >
+              SelfDrop
+            </a>
+          </span>
+          <span>&middot;</span>
+          <span>Self-hosted file sharing</span>
         </div>
       </div>
 

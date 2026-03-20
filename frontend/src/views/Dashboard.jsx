@@ -7,6 +7,7 @@ import { useAuth } from "../store.jsx";
 import FileTypeIcon, { getFileCategory } from "../components/FileTypeIcon.jsx";
 import { formatExpiry, isExpiringSoon } from "../utils/formatDate.js";
 import { getMimeTypeFromFilename } from "../utils/fileUtils.js";
+import { useShareUrl } from "../utils/useShareUrl.js";
 
 export default function Dashboard({ onNavigate }) {
   const [shares, setShares] = useState([]);
@@ -15,6 +16,7 @@ export default function Dashboard({ onNavigate }) {
   const [revoking, setRevoking] = useState(false);
   const showToast = useToast();
   const { clearToken } = useAuth();
+  const { shareBase } = useShareUrl();
 
   useEffect(() => {
     fetchShares();
@@ -53,7 +55,7 @@ export default function Dashboard({ onNavigate }) {
   }
 
   function copyLink(uuid) {
-    const url = `${window.location.origin}/share/${uuid}`;
+    const url = buildShareUrl(shareBase, uuid);
     navigator.clipboard
       .writeText(url)
       .then(() => showToast("Share link copied.", "success"))

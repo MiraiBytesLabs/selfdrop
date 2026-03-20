@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import Topbar from "../components/Topbar.jsx";
 import FileBrowser from "../components/FileBrowser.jsx";
-import { createShare } from "../api.js";
+import { createShare, getSettings } from "../api.js";
 import { useToast } from "../components/Toast.jsx";
 import { getMimeTypeFromFilename } from "../utils/fileUtils.js";
 import FileTypeIcon from "../components/FileTypeIcon.jsx";
+import { useShareUrl, buildShareUrl } from "../utils/useShareUrl.js";
 
 const EXPIRY_PRESETS = [
   { label: "1 hour", hours: 1 },
@@ -17,6 +18,22 @@ const EXPIRY_PRESETS = [
 
 export default function CreateShare({ onNavigate }) {
   const showToast = useToast();
+  const { shareBase } = useShareUrl();
+
+  // Load share defaults from server on mount
+  useEffect(() => {
+    getSettings().then(({ data }) => {
+      if (!data) return;
+      // Find matching expiry preset index
+      const hours = parseInt(data.default_expiry_hours || "24");
+      const presetIdx = EXPIRY_PRESETS.findIndex((p) => p.hours === hours);
+      if (presetIdx >= 0) setExpiryPreset(presetIdx);
+      if (data.default_download_limit && data.default_download_limit !== "0") {
+        setDownloadLimit(data.default_download_limit);
+      }
+      if (data.default_mask_filenames === "1") setMaskFilenames(true);
+    });
+  }, []);
 
   // Share name
   const [shareName, setShareName] = useState("");
@@ -143,7 +160,7 @@ export default function CreateShare({ onNavigate }) {
 
   // ── Success state ─────────────────────────────────────
   if (created) {
-    const shareUrl = `${window.location.origin}/share/${created.uuid}`;
+    const shareUrl = buildShareUrl(shareBase, created.uuid);
     return (
       <div className="admin-wrap view-enter">
         <Topbar active="shares" onNavigate={onNavigate} />

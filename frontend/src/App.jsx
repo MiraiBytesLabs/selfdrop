@@ -6,6 +6,7 @@ import Login from "./views/Login.jsx";
 import Dashboard from "./views/Dashboard.jsx";
 import CreateShare from "./views/CreateShare.jsx";
 import Download from "./views/Download.jsx";
+import Settings from "./views/Settings.jsx";
 import { getAuthStatus } from "./api.js";
 
 function getShareUuid() {
@@ -70,6 +71,7 @@ function Inner() {
       {view === "dashboard" && <Dashboard onNavigate={navigate} />}
       {view === "create" && <CreateShare onNavigate={navigate} />}
       {view === "download" && <Download uuid={shareUuid} />}
+      {view === "settings" && <Settings onNavigate={navigate} />}
     </>
   );
 }

@@ -723,3 +723,49 @@ tr:hover td     { background: var(--surface2); }
   transition: all 0.15s; color: var(--text);
 }
 .preview-state__btn:hover { background: var(--surface2); }
+
+/* ── Settings page ───────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+
+.settings-section-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 20px;
+}
+.settings-section-card--danger { border-color: rgba(192,57,43,0.25); }
+
+.settings-section-card__header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.settings-section-card--danger .settings-section-card__header {
+  background: var(--danger-light);
+}
+.settings-section-card__title    { font-size: 14px; font-weight: 500; }
+.settings-section-card--danger .settings-section-card__title { color: var(--danger); }
+.settings-section-card__subtitle { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.5; }
+.settings-section-card__body     { padding: 20px; }
+
+/* Info table */
+.info-table { display: flex; flex-direction: column; }
+.info-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  gap: 16px; font-size: 13px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row__label { color: var(--text-2); flex-shrink: 0; }
+.info-row__value { color: var(--text); text-align: right; word-break: break-all; }
+.info-row__value--mono { font-family: var(--mono); font-size: 11px; }
+.info-row__value--warn { color: var(--danger); }
+
+/* Danger rows */
+.danger-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.danger-row:last-child { border-bottom: none; padding-bottom: 0; }
+.danger-row:first-child { padding-top: 0; }
+.danger-row__text  { flex: 1; min-width: 0; }
+.danger-row__title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.danger-row__desc  { font-size: 12px; color: var(--text-2); line-height: 1.5; }

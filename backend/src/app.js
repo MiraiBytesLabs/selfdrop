@@ -7,11 +7,10 @@ const fsRouter = require("./routes/fs");
 const sharesRouter = require("./routes/shares");
 const authRouter = require("./routes/auth");
 const downloadRouter = require("./routes/download");
+const settingsRouter = require("./routes/settings");
 const requireAuth = require("./middleware/requireAuth");
 
 const app = express();
-
-app.disable("x-powered-by");
 
 // ── Middleware ────────────────────────────────────────────
 app.use(express.json());
@@ -43,6 +42,10 @@ app.use("/api/shares", requireAuth, sharesRouter);
 
 // Download handler — public, self-validates via share token
 app.use("/s", downloadRouter);
+
+// Settings, storage info, danger zone — protected
+app.use("/api/settings", settingsRouter);
+app.use("/api/admin", settingsRouter);
 
 // ── 404 catch-all ────────────────────────────────────────
 app.use((_req, res) => {

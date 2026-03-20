@@ -783,21 +783,50 @@ tr:hover td     { background: var(--surface2); }
 .download-wrap--list {
   align-items: flex-start;
   justify-content: center;
-  padding: 40px 24px 100px;
+  /* Full viewport height minus padding top/bottom */
+  padding: 40px 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .download-card--list {
   max-width: 560px;
   width: 100%;
+  /* Fill available height so inner layout can flex */
+  height: calc(100vh - 80px);
+  max-height: 860px;  /* cap on very tall screens so it doesn't stretch too far */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;   /* children control their own overflow */
 }
 
 .download-header--list {
   padding: 24px 28px 20px;
+  flex-shrink: 0;     /* never compress the header */
+}
+
+/* Scrollable file list — grows to fill space between header and footer */
+.download-card--list ul {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  min-height: 0;      /* critical: allows flex child to shrink below content size */
+}
+
+/* Sticky footer pinned to bottom of card */
+.dl-footer {
+  flex-shrink: 0;
+}
+
+/* Branding footer pinned below sticky footer */
+.download-card--list .download-footer {
+  flex-shrink: 0;
 }
 
 /* ── Download footer bar ─────────────────────────────────── */
 .dl-footer {
-  position: sticky; bottom: 0;
+  /* No longer sticky — pinned naturally as flex-shrink: 0 child of flex column */
   background: var(--surface);
   border-top: 1px solid var(--border);
   padding: 12px 28px;
@@ -806,6 +835,7 @@ tr:hover td     { background: var(--surface2); }
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .dl-footer__info {
@@ -841,14 +871,14 @@ tr:hover td     { background: var(--surface2); }
 
 /* ── Tablet landscape (≤ 1024px) ─────────────────────────── */
 @media (max-width: 1024px) {
-  .download-wrap--list { padding: 32px 20px 80px; }
-  .download-card--list  { max-width: 540px; }
+  .download-wrap--list { padding: 32px 20px; }
+  .download-card--list  { max-width: 540px; height: calc(100vh - 64px); }
 }
 
 /* ── Tablet portrait (≤ 768px) ───────────────────────────── */
 @media (max-width: 768px) {
-  .download-wrap--list   { padding: 24px 16px 80px; }
-  .download-card--list   { max-width: 100%; border-radius: 10px; }
+  .download-wrap--list   { padding: 24px 16px; }
+  .download-card--list   { max-width: 100%; border-radius: 10px; height: calc(100vh - 48px); }
   .download-header--list { padding: 20px 20px 16px; }
 
   /* File rows — tighter padding */
@@ -866,8 +896,8 @@ tr:hover td     { background: var(--surface2); }
 
 /* ── Large phone (≤ 600px) ───────────────────────────────── */
 @media (max-width: 600px) {
-  .download-wrap--list { padding: 16px 12px 80px; background: var(--bg); }
-  .download-card--list { border-radius: 8px; }
+  .download-wrap--list { padding: 16px 12px; background: var(--bg); }
+  .download-card--list { border-radius: 8px; height: calc(100vh - 32px); }
   .download-header--list { padding: 16px 16px 14px; }
 
   /* Filename — allow wrapping on small screens */
@@ -913,12 +943,16 @@ tr:hover td     { background: var(--surface2); }
 
 /* ── Phone (≤ 480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
-  .download-wrap--list { padding: 12px 8px 80px; }
-  .download-card--list { border-radius: 6px; border-left: none; border-right: none; }
+  .download-wrap--list { padding: 0; align-items: stretch; }
+  .download-card--list {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+  }
   .download-header--list { padding: 14px 14px 12px; }
-
-  /* Card goes edge to edge on phone */
-  .download-card--list  { border-radius: 0; max-width: 100%; }
 
   .download-filename    { font-size: 13px; }
 

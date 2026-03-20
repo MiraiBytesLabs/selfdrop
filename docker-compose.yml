@@ -1,0 +1,61 @@
+# ── SelfDrop docker-compose.yml ───────────────────────────
+#
+# Two usage modes:
+#
+# 1. Standalone (default) — embedded Nginx handles everything
+#      docker compose up
+#
+# 2. External proxy — expose Node directly, use your own Nginx/Traefik/Caddy
+#      PROXY_MODE=external docker compose up
+#    or set PROXY_MODE=external in a .env file
+#
+# See docker/examples/ for reverse proxy configuration examples.
+
+services:
+  selfdrop:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: selfdrop
+    restart: unless-stopped
+    ports:
+      # Internal mode: Nginx on 80, mapped to host 8080
+      - "8080:80"
+      # External mode: Node on 3000, mapped to host 3000
+      # Only needed when PROXY_MODE=external
+      - "3000:3000"
+    volumes:
+      # Files to share — point to your actual files directory
+      - "/d/Apple Music:/data/files:ro"
+      # Database persistence
+      - selfdrop-db:/data/db
+    environment:
+      # ── Required ───────────────────────────────────────
+      # Change this to a long random string before deploying
+      SESSION_SECRET: change-me-to-a-long-random-string
+
+      # ── Proxy mode ─────────────────────────────────────
+      # internal: use embedded Nginx (default)
+      # external: expose Node directly, use your own proxy
+      PROXY_MODE: internal
+
+      # ── Sendfile mode ───────────────────────────────────
+      # x-accel-redirect: Nginx serves files directly (default, best performance)
+      # stream: Node streams files (use with Traefik, Caddy, or external non-Nginx proxy)
+      SENDFILE_MODE: x-accel-redirect
+
+      # ── Optional ───────────────────────────────────────
+      SESSION_MODE: persistent   # or "session"
+      PORT: 3000
+      FILES_ROOT: /data/files
+      DB_PATH: /data/db/selfdrop.db
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  selfdrop-db:

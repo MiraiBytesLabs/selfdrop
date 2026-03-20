@@ -1,0 +1,41 @@
+# ── SelfDrop — Traefik reverse proxy example ──────────────
+#
+# Use this when PROXY_MODE=external in your docker-compose.yml.
+# Add these labels to your selfdrop service.
+#
+# NOTE: With Traefik, SENDFILE_MODE must be set to "stream"
+# since Traefik does not support X-Accel-Redirect.
+# Node will stream files directly — perfectly fine for most use cases.
+#
+# This assumes you have a Traefik instance running with a
+# "web" entrypoint on port 80 and "websecure" on port 443.
+
+services:
+  selfdrop:
+    image: selfdrop
+    container_name: selfdrop
+    restart: unless-stopped
+    expose:
+      - "3000"
+    volumes:
+      - /path/to/your/files:/data/files:ro
+      - selfdrop-db:/data/db
+    environment:
+      SESSION_SECRET: change-me-to-a-long-random-string
+      PROXY_MODE: external
+      SENDFILE_MODE: stream      # Traefik does not support X-Accel-Redirect
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.selfdrop.rule=Host(`selfdrop.yourdomain.com`)"
+      - "traefik.http.routers.selfdrop.entrypoints=websecure"
+      - "traefik.http.routers.selfdrop.tls.certresolver=letsencrypt"
+      - "traefik.http.services.selfdrop.loadbalancer.server.port=3000"
+    networks:
+      - traefik-network
+
+networks:
+  traefik-network:
+    external: true
+
+volumes:
+  selfdrop-db:

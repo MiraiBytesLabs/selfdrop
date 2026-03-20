@@ -1,0 +1,25 @@
+# Dependencies — reinstalled during build
+backend/node_modules
+
+# Dev and local data
+backend/data
+**/.env
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Git
+.git
+.gitignore
+
+# Docs
+*.md
+!README.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea

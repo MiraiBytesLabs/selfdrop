@@ -1,0 +1,13 @@
+# ── SelfDrop — Caddy reverse proxy example ────────────────
+#
+# Use this when PROXY_MODE=external in your docker-compose.yml.
+#
+# NOTE: With Caddy, SENDFILE_MODE must be set to "stream"
+# since Caddy does not support X-Accel-Redirect.
+#
+# Add this to your Caddyfile. Caddy handles SSL automatically
+# via Let's Encrypt — no extra configuration needed.
+
+selfdrop.yourdomain.com {
+  reverse_proxy localhost:3000
+}

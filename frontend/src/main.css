@@ -629,6 +629,8 @@ tr:hover td     { background: var(--surface2); }
   display: flex; align-items: stretch; position: relative;
   /* Consistent height floor across all preview types */
   min-height: 320px;
+  /* Allow vertical scroll/zoom but let JS handle horizontal swipe */
+  touch-action: pan-y;
 }
 
 .preview-modal__content {
@@ -1050,9 +1052,9 @@ tr:hover td     { background: var(--surface2); }
 @media (max-width: 480px) {
   .topbar { height: 48px; }
 
-  /* Hide nav labels — only show active item */
-  .topbar-nav-item:not(.active) { display: none; }
-  .topbar-nav-item.active { font-size: 13px; }
+  /* Keep all nav items visible — just tighter */
+  .topbar-nav-item { font-size: 12px; padding: 5px 8px; }
+  .topbar-nav-item.active { font-weight: 500; }
 
   /* Logo — hide text, keep mark */
   .logo span { display: none; }

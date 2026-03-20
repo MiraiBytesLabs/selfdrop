@@ -15,6 +15,8 @@ export default function PreviewModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const prevBlobRef = useRef(null);
+  const touchStartX = useRef(null);
+  const stripRef = useRef(null);
 
   const file = files[index];
   const category = getFileCategory(file?.mimeType);
@@ -98,6 +100,21 @@ export default function PreviewModal({
     [],
   );
 
+  // Scroll thumbnail strip to keep active item visible
+  useEffect(() => {
+    if (!stripRef.current) return;
+    const active = stripRef.current.querySelector(
+      ".preview-modal__strip-item.active",
+    );
+    if (active) {
+      active.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }
+  }, [index]);
+
   // ── Download helper ─────────────────────────────────────
   function downloadFile() {
     const headers = password ? { "X-Share-Password": password } : {};
@@ -165,7 +182,24 @@ export default function PreviewModal({
         </div>
 
         {/* Body */}
-        <div className="preview-modal__body">
+        <div
+          className="preview-modal__body"
+          onTouchStart={(e) => {
+            // Only track single-finger horizontal swipes
+            if (e.touches.length === 1) {
+              touchStartX.current = e.touches[0].clientX;
+            }
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null || files.length <= 1) return;
+            const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+            const THRESHOLD = 50; // px — must swipe at least this far
+            if (deltaX < -THRESHOLD)
+              next(); // swipe left → next
+            else if (deltaX > THRESHOLD) prev(); // swipe right → prev
+            touchStartX.current = null;
+          }}
+        >
           {files.length > 1 && (
             <button
               className="preview-modal__arrow preview-modal__arrow--left"
@@ -223,7 +257,7 @@ export default function PreviewModal({
 
         {/* Thumbnail strip */}
         {files.length > 1 && (
-          <div className="preview-modal__strip">
+          <div className="preview-modal__strip" ref={stripRef}>
             {files.map((f, i) => (
               <button
                 key={f.path}

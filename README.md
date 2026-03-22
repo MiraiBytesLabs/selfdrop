@@ -4,9 +4,7 @@ Share files already on your server — without uploading them anywhere.
 
 SelfDrop is a self-hosted file sharing tool that lets you create share links directly from your server's filesystem. Point it at a directory, pick a file, and get a link. No third-party services, no re-uploading files you already have.
 
-![SelfDrop Dashboard](https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/main/docs/screenshot.png)
-
----
+## ![SelfDrop](docs/banner.svg)
 
 ## Features
 
@@ -208,6 +206,16 @@ npm test
 ```
 
 ---
+
+## Screenshots
+
+## ![Desktop Dashboard](docs/screenshots/desktop-dashboard.png)
+
+|                                                                                                                      |                                                                                                                         |                                                                                                                     |
+| :------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------: |
+| <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-dashboard-dark.png"> blah |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-dashboard-light.png">     |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-fileBrowser.png">     |
+|        <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-login.png">        | <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-passwordProtectedShare.png"> |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-shareCreated.png">    |
+|     <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedItems.png">     |   <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedImagePreview.png">   | <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedVideoPreview.png"> |
 
 ## Contributing
 

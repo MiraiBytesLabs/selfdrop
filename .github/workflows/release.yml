@@ -1,0 +1,136 @@
+name: Release
+
+# Triggers on version tags: v0.1.0, v1.2.3, etc.
+# Also allows manual trigger from the Actions tab for testing.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag to build (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  release:
+    name: Build & push multi-arch image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create GitHub release
+      packages: write
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Resolve version ────────────────────────────────────
+      # Works for both push-tag and manual workflow_dispatch
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          # Strip leading 'v' for bare version number (e.g. 0.1.0)
+          BARE="${VERSION#v}"
+          echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "bare=${BARE}"   >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION} (bare: ${BARE})"
+
+      # ── Docker meta ────────────────────────────────────────
+      # Generates tags:
+      #   miraibyteslabs/selfdrop:latest
+      #   miraibyteslabs/selfdrop:0.1.0
+      #   miraibyteslabs/selfdrop:0.1        (minor)
+      #   miraibyteslabs/selfdrop:0          (major)
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: miraibyteslabs/selfdrop
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.tag }}
+            type=raw,value=latest
+
+      # ── QEMU + buildx ──────────────────────────────────────
+      # QEMU lets the runner emulate arm64 — required for Pi support.
+      # buildx is Docker's multi-platform build driver.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Login ──────────────────────────────────────────────
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ── Build & push ───────────────────────────────────────
+      # Build both platforms in one pass and push directly to Docker Hub.
+      # Layer caching via GitHub Actions cache keeps subsequent builds fast.
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.bare }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false   # keeps the manifest clean for simple pulls
+
+      # ── Verify ─────────────────────────────────────────────
+      - name: Verify image manifest
+        run: |
+          docker buildx imagetools inspect miraibyteslabs/selfdrop:${{ steps.version.outputs.bare }}
+
+      # ── GitHub Release ─────────────────────────────────────
+      # Creates a GitHub release with the image digest and install snippet.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push'
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: SelfDrop ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            ## Docker
+
+            ```yaml
+            services:
+              selfdrop:
+                image: miraibyteslabs/selfdrop:${{ steps.version.outputs.bare }}
+                restart: unless-stopped
+                ports:
+                  - "8080:80"
+                volumes:
+                  - /path/to/your/files:/data/files:ro
+                  - selfdrop-db:/data/db
+                environment:
+                  SESSION_SECRET: your-secret-here
+
+            volumes:
+              selfdrop-db:
+            ```
+
+            **Platforms:** `linux/amd64` · `linux/arm64`
+            **Image digest:** `${{ steps.build.outputs.digest }}`
+
+            See the [README](https://github.com/MiraiBytesLabs/selfdrop#readme) for full setup instructions.

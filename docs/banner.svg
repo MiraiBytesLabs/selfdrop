@@ -1,0 +1,42 @@
+<svg width="1200" height="400" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="400" fill="#0d0d0c"/>
+  <rect x="0" y="0" width="5" height="400" fill="#2d6a4f"/>
+
+  <!-- Logo mark scaled up ~3.5x, centered vertically -->
+  <g transform="translate(72, 148) scale(3.5)">
+    <circle cx="16" cy="24" r="3" fill="#2d6a4f"/>
+    <line x1="16" y1="21" x2="16" y2="10" stroke="#2d6a4f" stroke-width="1.5"/>
+    <line x1="16" y1="14" x2="10" y2="8" stroke="#2d6a4f" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="12" x2="22" y2="6" stroke="#2d6a4f" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="16" x2="9" y2="12" stroke="#2d6a4f" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="16" x2="23" y2="13" stroke="#2d6a4f" stroke-width="1" stroke-linecap="round"/>
+    <circle cx="10" cy="8" r="2" fill="#2d6a4f" opacity="0.5"/>
+    <circle cx="22" cy="6" r="2" fill="#2d6a4f" opacity="0.5"/>
+    <circle cx="9" cy="12" r="2" fill="#2d6a4f" opacity="0.5"/>
+    <circle cx="23" cy="13" r="2" fill="#2d6a4f" opacity="0.5"/>
+  </g>
+
+  <!-- selfdrop wordmark -->
+  <text x="200" y="234" font-family="'IBM Plex Mono', 'Courier New', monospace" font-weight="500" font-size="96" fill="#e8e6e0" letter-spacing="-3">selfdrop</text>
+
+  <!-- Divider -->
+  <line x1="72" y1="272" x2="1128" y2="272" stroke="#2e2e2b" stroke-width="1.5"/>
+
+  <!-- Subtitle -->
+  <text x="72" y="316" font-family="'IBM Plex Mono', 'Courier New', monospace" font-weight="400" font-size="18" fill="#5a5a56" letter-spacing="3">SELF-HOSTED FILE SHARING</text>
+
+  <!-- v0.1.0 badge -->
+  <rect x="620" y="294" width="140" height="34" fill="#1a2e22" rx="6"/>
+  <text x="690" y="317" font-family="'IBM Plex Mono', 'Courier New', monospace" font-size="17" fill="#4a9e74" text-anchor="middle" letter-spacing="1">v0.1.0</text>
+
+  <!-- Node badge -->
+  <rect x="774" y="294" width="168" height="34" fill="#1a1917" rx="6"/>
+  <text x="858" y="317" font-family="'IBM Plex Mono', 'Courier New', monospace" font-size="17" fill="#3d3d39" text-anchor="middle" letter-spacing="1">Node 24 · ESM</text>
+
+  <!-- MIT badge -->
+  <rect x="956" y="294" width="140" height="34" fill="#1a1917" rx="6"/>
+  <text x="1026" y="317" font-family="'IBM Plex Mono', 'Courier New', monospace" font-size="17" fill="#3d3d39" text-anchor="middle" letter-spacing="1">MIT License</text>
+
+  <!-- GitHub URL -->
+  <text x="72" y="368" font-family="'IBM Plex Mono', 'Courier New', monospace" font-weight="400" font-size="16" fill="#3d3d39" letter-spacing="1">github.com/MiraiBytesLabs/selfdrop</text>
+</svg>

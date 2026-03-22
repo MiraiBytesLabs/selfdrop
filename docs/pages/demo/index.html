@@ -1,0 +1,2175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>SelfDrop — Interactive Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #f5f4f0;
+        --surface: #ffffff;
+        --surface2: #f0efe9;
+        --border: #e2e0d8;
+        --border-strong: #c8c5b8;
+        --text: #1a1917;
+        --text-2: #6b6860;
+        --text-3: #9c9a94;
+        --accent: #2d6a4f;
+        --accent-light: #e8f5ee;
+        --accent-hover: #245c43;
+        --danger: #c0392b;
+        --danger-light: #fdf0ee;
+        --warning: #d47c10;
+        --warning-light: #fef8ec;
+        --mono: "IBM Plex Mono", monospace;
+        --sans: "IBM Plex Sans", sans-serif;
+        --radius: 6px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md:
+          0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+      }
+
+      html.dark {
+        --bg: #111110;
+        --surface: #1c1c1a;
+        --surface2: #242422;
+        --border: #2e2e2b;
+        --border-strong: #3d3d39;
+        --text: #e8e6e0;
+        --text-2: #9c9a94;
+        --text-3: #5a5a56;
+        --accent: #4a9e74;
+        --accent-light: #1a2e22;
+        --accent-hover: #5cb888;
+        --danger: #e05c4a;
+        --danger-light: #2a1614;
+        --warning: #e09040;
+        --warning-light: #2a1e0a;
+      }
+
+      html,
+      body,
+      #root {
+        min-height: 100vh;
+        background: var(--bg);
+        font-family: var(--sans);
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      /* ── Demo banner ── */
+      .demo-banner {
+        background: var(--accent);
+        color: #fff;
+        padding: 8px 20px;
+        text-align: center;
+        font-size: 12px;
+        font-family: var(--mono);
+        letter-spacing: 0.03em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .demo-banner a {
+        color: #fff;
+        opacity: 0.85;
+        text-decoration: underline;
+      }
+      .demo-banner a:hover {
+        opacity: 1;
+      }
+
+      /* ── Topbar ── */
+      .topbar {
+        height: 52px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .topbar-divider {
+        width: 1px;
+        height: 20px;
+        background: var(--border);
+      }
+      .topbar-nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex: 1;
+      }
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .topbar-nav-item {
+        font-size: 13px;
+        color: var(--text-2);
+        padding: 5px 10px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.15s;
+        border: none;
+        background: none;
+        font-family: var(--sans);
+      }
+      .topbar-nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .topbar-nav-item.active {
+        background: var(--surface2);
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text);
+        letter-spacing: -0.02em;
+        cursor: pointer;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        font-family: var(--sans);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+      .btn-secondary {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--surface2);
+        border-color: var(--border-strong);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text-2);
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+      .btn-ghost:hover:not(:disabled) {
+        background: var(--surface2);
+        color: var(--text);
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent-light);
+        border: 1px solid rgba(45, 106, 79, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--accent);
+        cursor: pointer;
+        position: relative;
+      }
+      .avatar-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        min-width: 170px;
+        z-index: 200;
+        overflow: hidden;
+      }
+      .avatar-menu-label {
+        padding: 8px 14px 4px;
+        font-size: 11px;
+        font-family: var(--mono);
+        color: var(--text-3);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .avatar-menu-user {
+        padding: 4px 14px 8px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .avatar-menu-divider {
+        height: 1px;
+        background: var(--border);
+      }
+      .avatar-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.1s;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-family: var(--sans);
+      }
+      .avatar-menu-item:hover {
+        background: var(--surface2);
+      }
+
+      /* ── Mini toggle ── */
+      .mini-toggle {
+        display: inline-block;
+        width: 28px;
+        height: 16px;
+        border-radius: 100px;
+        background: var(--border-strong);
+        position: relative;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      .mini-toggle::after {
+        content: "";
+        position: absolute;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #fff;
+        top: 2.5px;
+        left: 2.5px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+      .mini-toggle.on {
+        background: var(--accent);
+      }
+      .mini-toggle.on::after {
+        left: 14.5px;
+      }
+
+      /* ── Views ── */
+      .view {
+        display: none;
+        animation: viewIn 0.18s ease;
+      }
+      .view.active {
+        display: block;
+      }
+      @keyframes viewIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .admin-wrap {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .admin-content {
+        flex: 1;
+        padding: 32px 24px;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        gap: 16px;
+      }
+      .page-title {
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      .page-subtitle {
+        font-size: 13px;
+        color: var(--text-2);
+        margin-top: 3px;
+      }
+
+      /* ── Stats ── */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+      }
+      .stat-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 6px;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .stat-sub {
+        font-size: 12px;
+        color: var(--text-3);
+        margin-top: 2px;
+      }
+
+      /* ── Table ── */
+      .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .table-title {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        font-weight: 400;
+      }
+      td {
+        padding: 13px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: var(--surface2);
+      }
+
+      .td-filename {
+        font-family: var(--mono);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .file-icon {
+        width: 28px;
+        height: 28px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .td-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-family: var(--mono);
+      }
+      .badge-active {
+        background: var(--accent-light);
+        color: var(--accent);
+      }
+      .badge-expired {
+        background: var(--surface2);
+        color: var(--text-3);
+      }
+      .badge-limited {
+        background: var(--warning-light);
+        color: var(--warning);
+      }
+
+      .token-chip {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-3);
+        background: var(--surface2);
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .token-chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .token-chip.copied {
+        background: var(--accent-light);
+        color: var(--accent);
+        border-color: rgba(45, 106, 79, 0.2);
+      }
+
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        color: var(--text-2);
+      }
+      .icon-btn:hover {
+        background: var(--surface2);
+        border-color: var(--border-strong);
+        color: var(--text);
+      }
+      .icon-btn.danger:hover {
+        background: var(--danger-light);
+        border-color: rgba(192, 57, 43, 0.2);
+        color: var(--danger);
+      }
+
+      /* ── Filter pills ── */
+      .filter-pills {
+        display: flex;
+        gap: 6px;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .filter-pill {
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-family: var(--mono);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.15s;
+        background: var(--surface);
+        color: var(--text-3);
+      }
+      .filter-pill.active {
+        border-color: var(--accent);
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* ── Create share ── */
+      .create-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        align-items: start;
+      }
+      .settings-col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .panel-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-title {
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .panel-body {
+        padding: 16px 20px;
+      }
+
+      /* ── File browser ── */
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-3);
+        padding: 10px 20px;
+        background: var(--surface2);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .bc-sep {
+        color: var(--text-3);
+        margin: 0 2px;
+      }
+      .bc-item {
+        cursor: pointer;
+        transition: color 0.1s;
+      }
+      .bc-item:hover {
+        color: var(--accent);
+      }
+
+      .file-list {
+        list-style: none;
+      }
+      .file-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 20px;
+        cursor: pointer;
+        transition: background 0.1s;
+        border-bottom: 1px solid var(--border);
+        user-select: none;
+      }
+      .file-row:last-child {
+        border-bottom: none;
+      }
+      .file-row:hover {
+        background: var(--surface2);
+      }
+      .file-row.selected {
+        background: var(--accent-light);
+      }
+      .file-row-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+      }
+      .file-row-icon.selected {
+        background: var(--accent-light);
+        border-color: rgba(45, 106, 79, 0.2);
+      }
+      .file-row-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .file-row-name {
+        font-family: var(--mono);
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .file-row-meta {
+        font-size: 11px;
+        color: var(--text-3);
+        margin-top: 1px;
+      }
+      .file-row-size {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-3);
+        flex-shrink: 0;
+      }
+
+      .selected-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .selected-indicator.visible {
+        opacity: 1;
+      }
+
+      /* ── Share settings ── */
+      .settings-section {
+        margin-bottom: 20px;
+      }
+      .settings-section:last-child {
+        margin-bottom: 0;
+      }
+      .settings-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 10px;
+      }
+      .expiry-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      .expiry-btn {
+        padding: 7px 4px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-2);
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.15s;
+      }
+      .expiry-btn:hover,
+      .expiry-btn.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-light);
+      }
+      .expiry-btn.active {
+        font-weight: 500;
+      }
+      .input-small {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        background: var(--surface);
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .input-small:focus {
+        border-color: var(--accent);
+      }
+      .input-small::placeholder {
+        color: var(--text-3);
+      }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .toggle {
+        width: 36px;
+        height: 20px;
+        background: var(--border-strong);
+        border-radius: 100px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      .toggle.on {
+        background: var(--accent);
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        top: 3px;
+        left: 3px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .toggle.on::after {
+        left: 19px;
+      }
+
+      /* ── Form ── */
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-2);
+        margin-bottom: 6px;
+        font-family: var(--mono);
+      }
+      .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: var(--sans);
+        font-size: 14px;
+        color: var(--text);
+        background: var(--surface);
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .form-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+      }
+      .form-input::placeholder {
+        color: var(--text-3);
+      }
+
+      /* ── Success screen ── */
+      .success-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--accent-light);
+        border: 1px solid rgba(45, 106, 79, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+      }
+      .share-url-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 10px 14px;
+        margin-bottom: 20px;
+      }
+      .share-url-text {
+        flex: 1;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-2);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .share-details {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        text-align: left;
+      }
+      .share-detail-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .share-detail-row:last-child {
+        border-bottom: none;
+      }
+
+      /* ── Download page ── */
+      .download-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 40px 24px;
+        background: var(--bg);
+      }
+      .download-card {
+        width: 100%;
+        max-width: 560px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
+      }
+      .download-header {
+        padding: 24px 28px 20px;
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .download-branding {
+        margin-bottom: 16px;
+      }
+      .download-filename {
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 10px;
+        word-break: break-all;
+      }
+      .download-meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .download-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .download-footer {
+        padding: 14px 28px;
+        background: var(--surface2);
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--text-3);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .dl-footer {
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 12px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .dl-footer__info {
+        font-size: 12px;
+        color: var(--text-2);
+        font-family: var(--mono);
+      }
+      .dl-footer__actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ── Toast ── */
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .toast {
+        background: var(--text);
+        color: var(--bg);
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        box-shadow: var(--shadow-md);
+        animation: toastIn 0.2s ease;
+      }
+      .toast.success {
+        background: var(--accent);
+        color: #fff;
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── Overlay ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        animation: fadeIn 0.15s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .dialog {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 28px;
+        max-width: 380px;
+        width: 100%;
+        box-shadow: var(--shadow-md);
+      }
+      .dialog-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .dialog-body {
+        font-size: 13px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+        line-height: 1.6;
+      }
+      .dialog-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      @media (max-width: 900px) {
+        .create-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 768px) {
+        .stats-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .admin-content {
+          padding: 20px 16px;
+        }
+        th:nth-child(2),
+        td:nth-child(2),
+        th:nth-child(5),
+        td:nth-child(5) {
+          display: none;
+        }
+      }
+      @media (max-width: 600px) {
+        th:nth-child(4),
+        td:nth-child(4) {
+          display: none;
+        }
+      }
+
+      .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+      }
+      .empty-title {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 6px;
+      }
+      .empty-sub {
+        font-size: 13px;
+        color: var(--text-2);
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-banner">
+      ⚡ Interactive demo — all data is simulated, nothing is saved
+      <a href="../">← Back to selfdrop.io</a>
+    </div>
+
+    <div id="app"></div>
+    <div class="toast-container" id="toasts"></div>
+
+    <script>
+      // ── State ────────────────────────────────────────────────
+      const state = {
+        view: "dashboard",
+        dark: window.matchMedia("(prefers-color-scheme: dark)").matches,
+        avatarOpen: false,
+        filter: "all",
+        search: "",
+        page: 1,
+        PAGE_SIZE: 10,
+        createStep: "browse", // browse | settings | success
+        selectedFiles: [],
+        expiryPreset: 1,
+        customExpiry: "",
+        downloadLimit: "",
+        passwordEnabled: false,
+        password: "",
+        maskFilenames: false,
+        shareName: "",
+        createdShare: null,
+        revokeUuid: null,
+        currentPath: "/",
+        downloadShare: null,
+        selectedDownloadFiles: new Set(),
+        shares: [
+          {
+            uuid: "a1b2c3d4-0001",
+            name: null,
+            filePaths: ["/documents/Q4-Report-Final.pdf"],
+            expires_at: future(3),
+            download_limit: null,
+            download_count: 7,
+            hasPassword: false,
+            maskFilenames: false,
+            created_at: past(5),
+            status: "active",
+          },
+          {
+            uuid: "a1b2c3d4-0002",
+            name: "Vacation Photos 2025",
+            filePaths: [
+              "/photos/beach.jpg",
+              "/photos/sunset.jpg",
+              "/photos/hike.jpg",
+              "/photos/hotel.jpg",
+            ],
+            expires_at: future(12),
+            download_limit: 10,
+            download_count: 3,
+            hasPassword: false,
+            maskFilenames: false,
+            created_at: past(3),
+            status: "active",
+          },
+          {
+            uuid: "a1b2c3d4-0003",
+            name: null,
+            filePaths: ["/software/setup-macos.dmg"],
+            expires_at: past(1),
+            download_limit: 12,
+            download_count: 12,
+            hasPassword: false,
+            maskFilenames: false,
+            created_at: past(10),
+            status: "expired",
+          },
+          {
+            uuid: "a1b2c3d4-0004",
+            name: null,
+            filePaths: ["/music/album-mix.mp3"],
+            expires_at: future(7),
+            download_limit: null,
+            download_count: 2,
+            hasPassword: true,
+            maskFilenames: false,
+            created_at: past(2),
+            status: "active",
+          },
+          {
+            uuid: "a1b2c3d4-0005",
+            name: "Project Assets",
+            filePaths: [
+              "/design/logo.svg",
+              "/design/brand-guide.pdf",
+              "/design/icons.zip",
+            ],
+            expires_at: future(1),
+            download_limit: 5,
+            download_count: 4,
+            hasPassword: false,
+            maskFilenames: true,
+            created_at: past(1),
+            status: "active",
+          },
+          {
+            uuid: "a1b2c3d4-0006",
+            name: null,
+            filePaths: ["/backups/config-backup.tar.gz"],
+            expires_at: past(5),
+            download_limit: null,
+            download_count: 1,
+            hasPassword: true,
+            maskFilenames: true,
+            created_at: past(20),
+            status: "expired",
+          },
+        ],
+        filesystem: {
+          "/": [
+            { name: "documents", type: "dir" },
+            { name: "photos", type: "dir" },
+            { name: "music", type: "dir" },
+            { name: "software", type: "dir" },
+            { name: "design", type: "dir" },
+            { name: "backups", type: "dir" },
+          ],
+          "/documents": [
+            {
+              name: "Q4-Report-Final.pdf",
+              type: "file",
+              size: "2.4 MB",
+              mime: "application/pdf",
+            },
+            {
+              name: "Budget-2026.xlsx",
+              type: "file",
+              size: "890 KB",
+              mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+            {
+              name: "Meeting-Notes.docx",
+              type: "file",
+              size: "156 KB",
+              mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            },
+            {
+              name: "Roadmap-H1.pdf",
+              type: "file",
+              size: "1.1 MB",
+              mime: "application/pdf",
+            },
+          ],
+          "/photos": [
+            {
+              name: "beach.jpg",
+              type: "file",
+              size: "4.2 MB",
+              mime: "image/jpeg",
+            },
+            {
+              name: "sunset.jpg",
+              type: "file",
+              size: "3.8 MB",
+              mime: "image/jpeg",
+            },
+            {
+              name: "hike.jpg",
+              type: "file",
+              size: "5.1 MB",
+              mime: "image/jpeg",
+            },
+            {
+              name: "hotel.jpg",
+              type: "file",
+              size: "2.9 MB",
+              mime: "image/jpeg",
+            },
+          ],
+          "/music": [
+            {
+              name: "album-mix.mp3",
+              type: "file",
+              size: "48.2 MB",
+              mime: "audio/mpeg",
+            },
+            {
+              name: "podcast-ep12.mp3",
+              type: "file",
+              size: "62.4 MB",
+              mime: "audio/mpeg",
+            },
+            {
+              name: "jingle.wav",
+              type: "file",
+              size: "8.7 MB",
+              mime: "audio/wav",
+            },
+          ],
+          "/software": [
+            {
+              name: "setup-macos.dmg",
+              type: "file",
+              size: "142 MB",
+              mime: "application/octet-stream",
+            },
+            {
+              name: "setup-win.exe",
+              type: "file",
+              size: "138 MB",
+              mime: "application/octet-stream",
+            },
+          ],
+          "/design": [
+            {
+              name: "logo.svg",
+              type: "file",
+              size: "24 KB",
+              mime: "image/svg+xml",
+            },
+            {
+              name: "brand-guide.pdf",
+              type: "file",
+              size: "5.6 MB",
+              mime: "application/pdf",
+            },
+            {
+              name: "icons.zip",
+              type: "file",
+              size: "2.1 MB",
+              mime: "application/zip",
+            },
+            {
+              name: "mockup.png",
+              type: "file",
+              size: "8.4 MB",
+              mime: "image/png",
+            },
+          ],
+          "/backups": [
+            {
+              name: "config-backup.tar.gz",
+              type: "file",
+              size: "1.2 MB",
+              mime: "application/gzip",
+            },
+            {
+              name: "db-dump-2025.sql.gz",
+              type: "file",
+              size: "34.5 MB",
+              mime: "application/gzip",
+            },
+          ],
+        },
+      };
+
+      function future(days) {
+        return new Date(Date.now() + days * 86400000).toISOString();
+      }
+      function past(days) {
+        return new Date(Date.now() - days * 86400000).toISOString();
+      }
+
+      // ── Helpers ──────────────────────────────────────────────
+      function formatExpiry(iso) {
+        const diff = new Date(iso) - Date.now();
+        if (diff <= 0) return "Expired";
+        const d = Math.floor(diff / 86400000);
+        if (d > 0) return `${d}d`;
+        const h = Math.floor(diff / 3600000);
+        return `${h}h`;
+      }
+      function expiringSoon(iso) {
+        return (
+          new Date(iso) - Date.now() < 86400000 * 2 &&
+          new Date(iso) > Date.now()
+        );
+      }
+      function fmtPath(path) {
+        return path === "/" ? "files" : "files" + path;
+      }
+      function baseName(path) {
+        return path.split("/").pop();
+      }
+      function mimeIcon(mime) {
+        if (!mime) return genericIcon();
+        if (mime.startsWith("image/"))
+          return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="1.5" stroke="var(--accent)" stroke-width="1.3"/><circle cx="5.5" cy="6" r="1.5" stroke="var(--accent)" stroke-width="1"/><path d="M1 11l4-3 3 2.5 2-2 4 3.5" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        if (mime.startsWith("audio/"))
+          return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M9 3L5 6H2v4h3l4 3V3z" stroke="var(--accent)" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 6c.8.8 1 1.5 1 2s-.2 1.2-1 2" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+        if (mime.startsWith("video/"))
+          return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="10" height="10" rx="1.5" stroke="var(--accent)" stroke-width="1.3"/><path d="M11 6l4-2v8l-4-2V6z" stroke="var(--accent)" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+        if (mime === "application/pdf")
+          return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="var(--accent)" stroke-width="1.3"/><line x1="6" y1="5" x2="10" y2="5" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/><line x1="6" y1="8" x2="10" y2="8" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/><line x1="6" y1="11" x2="8" y2="11" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/></svg>`;
+        if (
+          mime.includes("zip") ||
+          mime.includes("gzip") ||
+          mime.includes("tar")
+        )
+          return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2" stroke="var(--text-2)" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+        return genericIcon();
+      }
+      function genericIcon() {
+        return `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="var(--text-2)" stroke-width="1.3"/></svg>`;
+      }
+
+      function toast(msg, type = "") {
+        const c = document.getElementById("toasts");
+        const t = document.createElement("div");
+        t.className = "toast" + (type ? " " + type : "");
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+      }
+
+      function navigate(view, opts = {}) {
+        state.view = view;
+        if (opts.share) state.downloadShare = opts.share;
+        if (view === "create") {
+          state.createStep = "browse";
+          state.selectedFiles = [];
+          state.shareName = "";
+          state.passwordEnabled = false;
+          state.password = "";
+          state.maskFilenames = false;
+          state.customExpiry = "";
+          state.expiryPreset = 1;
+        }
+        state.avatarOpen = false;
+        render();
+      }
+
+      // ── Logo SVG ─────────────────────────────────────────────
+      function logoSVG(size = 18) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="24" r="3" fill="var(--accent)"/>
+    <line x1="16" y1="21" x2="16" y2="10" stroke="var(--accent)" stroke-width="1.5"/>
+    <line x1="16" y1="14" x2="10" y2="8" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="12" x2="22" y2="6" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="16" x2="9" y2="12" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="16" x2="23" y2="13" stroke="var(--accent)" stroke-width="1" stroke-linecap="round"/>
+    <circle cx="10" cy="8" r="2" fill="var(--accent)" opacity="0.5"/>
+    <circle cx="22" cy="6" r="2" fill="var(--accent)" opacity="0.5"/>
+    <circle cx="9" cy="12" r="2" fill="var(--accent)" opacity="0.5"/>
+    <circle cx="23" cy="13" r="2" fill="var(--accent)" opacity="0.5"/>
+  </svg>`;
+      }
+
+      // ── Topbar ───────────────────────────────────────────────
+      function renderTopbar(active) {
+        return `<div class="topbar">
+    <div class="logo" onclick="navigate('dashboard')">${logoSVG()} selfdrop</div>
+    <div class="topbar-divider"></div>
+    <nav class="topbar-nav">
+      <button class="topbar-nav-item ${active === "shares" ? "active" : ""}" onclick="navigate('dashboard')">Shares</button>
+      <button class="topbar-nav-item ${active === "settings" ? "active" : ""}" onclick="navigate('settings')">Settings</button>
+    </nav>
+    <div class="topbar-right">
+      <button class="btn btn-secondary" style="padding:6px 12px;font-size:13px;" onclick="navigate('create')">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>New Share</span>
+      </button>
+      <div class="avatar" onclick="toggleAvatar()">A
+        ${
+          state.avatarOpen
+            ? `<div class="avatar-menu">
+          <div class="avatar-menu-label">Signed in as</div>
+          <div class="avatar-menu-user">admin</div>
+          <div class="avatar-menu-divider"></div>
+          <button class="avatar-menu-item" onclick="toggleDark(event)">
+            ${state.dark ? sunIcon() : moonIcon()}
+            ${state.dark ? "Light mode" : "Dark mode"}
+            <span style="margin-left:auto"><span class="mini-toggle ${state.dark ? "on" : ""}"></span></span>
+          </button>
+          <div class="avatar-menu-divider"></div>
+          <button class="avatar-menu-item" style="color:var(--text-2)" onclick="toast('Logout is disabled in demo mode')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 2H2v12h4M11 11l3-3-3-3M14 8H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Sign out
+          </button>
+        </div>`
+            : ""
+        }
+      </div>
+    </div>
+  </div>`;
+      }
+
+      function moonIcon() {
+        return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.5 10.5A6 6 0 015.5 2.5a6 6 0 000 11 6 6 0 008-3z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+      }
+      function sunIcon() {
+        return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+      }
+
+      function toggleAvatar() {
+        state.avatarOpen = !state.avatarOpen;
+        render();
+      }
+      function toggleDark(e) {
+        e.stopPropagation();
+        state.dark = !state.dark;
+        document.documentElement.classList.toggle("dark", state.dark);
+        render();
+      }
+
+      // ── Dashboard ────────────────────────────────────────────
+      function renderDashboard() {
+        const active = state.shares.filter((s) => s.status === "active").length;
+        const expired = state.shares.filter(
+          (s) => s.status === "expired",
+        ).length;
+        const downloads = state.shares.reduce(
+          (s, sh) => s + sh.download_count,
+          0,
+        );
+        const soon = state.shares.filter(
+          (s) => s.status === "active" && expiringSoon(s.expires_at),
+        ).length;
+
+        const filtered = state.shares
+          .filter((s) => state.filter === "all" || s.status === state.filter)
+          .filter((s) => {
+            if (!state.search.trim()) return true;
+            const q = state.search.toLowerCase();
+            const name = (s.name || "").toLowerCase();
+            const file = (baseName(s.filePaths[0]) || "").toLowerCase();
+            return name.includes(q) || file.includes(q);
+          });
+
+        const totalPages = Math.max(
+          1,
+          Math.ceil(filtered.length / state.PAGE_SIZE),
+        );
+        const page = Math.min(state.page, totalPages);
+        const paginated = filtered.slice(
+          (page - 1) * state.PAGE_SIZE,
+          page * state.PAGE_SIZE,
+        );
+
+        return `<div class="admin-wrap">
+    ${renderTopbar("shares")}
+    <div class="admin-content">
+      <div class="page-header">
+        <div><div class="page-title">Shares</div><div class="page-subtitle">Manage your active share links</div></div>
+        <button class="btn btn-primary" onclick="navigate('create')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          New Share
+        </button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Active Shares</div><div class="stat-value" style="color:var(--accent)">${active}</div><div class="stat-sub">${soon > 0 ? soon + " expiring soon" : "all good"}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Downloads</div><div class="stat-value">${downloads}</div><div class="stat-sub">across all shares</div></div>
+        <div class="stat-card"><div class="stat-label">Expired</div><div class="stat-value">${expired}</div><div class="stat-sub">all time</div></div>
+        <div class="stat-card"><div class="stat-label">Total Shares</div><div class="stat-value">${state.shares.length}</div><div class="stat-sub">created</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">All Shares</span>
+          <div style="position:relative;margin-left:auto">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <input type="text" placeholder="Search shares…" value="${state.search}" oninput="doSearch(this.value)" style="padding-left:28px;padding-right:10px;padding-top:6px;padding-bottom:6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:var(--sans);font-size:12px;outline:none;width:180px;">
+          </div>
+        </div>
+        <div class="filter-pills">
+          ${[
+            ["all", "All"],
+            ["active", "Active"],
+            ["expired", "Expired"],
+            ["limit_reached", "Limit reached"],
+          ]
+            .map(
+              ([k, l]) =>
+                `<div class="filter-pill ${state.filter === k ? "active" : ""}" onclick="setFilter('${k}')">${l} <span style="opacity:.7">${k === "all" ? state.shares.length : state.shares.filter((s) => s.status === k).length}</span></div>`,
+            )
+            .join("")}
+        </div>
+        ${
+          paginated.length === 0
+            ? `<div style="padding:40px;text-align:center;color:var(--text-3);font-size:13px;">${state.shares.length === 0 ? "No shares yet." : "No shares match."}</div>`
+            : `
+        <table>
+          <thead><tr><th>File</th><th>Token</th><th>Status</th><th>Downloads</th><th>Expires</th><th></th></tr></thead>
+          <tbody>
+            ${paginated
+              .map((s) => {
+                const filename = s.name || baseName(s.filePaths[0]);
+                const isMulti = s.filePaths.length > 1;
+                const expBadge =
+                  s.status === "active" && expiringSoon(s.expires_at)
+                    ? "badge-limited"
+                    : s.status === "expired"
+                      ? "badge-expired"
+                      : "badge-active";
+                const expLabel =
+                  s.status === "expired"
+                    ? "expired"
+                    : s.status === "limit_reached"
+                      ? "limit"
+                      : expiringSoon(s.expires_at)
+                        ? "soon"
+                        : "active";
+                return `<tr>
+                <td><div class="td-filename">
+                  <div class="file-icon">
+                    ${isMulti ? `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2" stroke="var(--text-2)" stroke-width="1.3" stroke-linecap="round"/></svg>` : mimeIcon(s.filePaths[0] ? getFileMime(s.filePaths[0]) : "")}
+                  </div>
+                  ${s.hasPassword ? `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="color:var(--text-3)"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>` : ""}
+                  <div>
+                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${filename}</div>
+                    ${isMulti ? `<div style="font-size:10px;color:var(--text-3)">${s.filePaths.length} files</div>` : ""}
+                  </div>
+                </div></td>
+                <td><span class="token-chip" onclick="copyToken(this,'${s.uuid}')">${s.uuid.slice(0, 8)}…</span></td>
+                <td><span class="badge ${expBadge}">${expLabel}</span></td>
+                <td style="font-family:var(--mono);font-size:12px">${s.download_count}${s.download_limit ? " / " + s.download_limit : ""}</td>
+                <td style="font-family:var(--mono);font-size:12px;color:${expiringSoon(s.expires_at) ? "var(--warning)" : "var(--text-2)"}">${formatExpiry(s.expires_at)}</td>
+                <td><div class="td-actions">
+                  <button class="icon-btn" title="Open download page" onclick="openDownload('${s.uuid}')">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+                  </button>
+                  <button class="icon-btn" title="Copy link" onclick="copyShareLink('${s.uuid}')">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4H3a2 2 0 000 4h2M10 12h3a2 2 0 000-4h-2M5 8h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  </button>
+                  <button class="icon-btn danger" title="Revoke" onclick="confirmRevoke('${s.uuid}')">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  </button>
+                </div></td>
+              </tr>`;
+              })
+              .join("")}
+          </tbody>
+        </table>
+        ${
+          totalPages > 1
+            ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px">
+          <span style="font-size:12px;color:var(--text-3);font-family:var(--mono)">${(page - 1) * state.PAGE_SIZE + 1}–${Math.min(page * state.PAGE_SIZE, filtered.length)} of ${filtered.length}</span>
+          <div style="display:flex;gap:4px">
+            <button class="icon-btn" onclick="setPage(${page - 1})" ${page === 1 ? "disabled" : ""}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            ${Array.from({ length: totalPages }, (_, i) => i + 1)
+              .map(
+                (p) =>
+                  `<button onclick="setPage(${p})" style="width:28px;height:28px;border-radius:var(--radius);border:1px solid ${p === page ? "var(--accent)" : "var(--border)"};background:${p === page ? "var(--accent-light)" : "var(--surface)"};color:${p === page ? "var(--accent)" : "var(--text-2)"};font-size:12px;font-family:var(--mono);cursor:pointer">${p}</button>`,
+              )
+              .join("")}
+            <button class="icon-btn" onclick="setPage(${page + 1})" ${page === totalPages ? "disabled" : ""}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>`
+            : ""
+        }
+        `
+        }
+      </div>
+    </div>
+    ${state.revokeUuid ? renderRevokeDialog() : ""}
+  </div>`;
+      }
+
+      function getFileMime(path) {
+        const ext = path.split(".").pop().toLowerCase();
+        const map = {
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          png: "image/png",
+          gif: "image/gif",
+          webp: "image/webp",
+          mp3: "audio/mpeg",
+          wav: "audio/wav",
+          mp4: "video/mp4",
+          pdf: "application/pdf",
+          zip: "application/zip",
+          gz: "application/gzip",
+          dmg: "application/octet-stream",
+          exe: "application/octet-stream",
+          svg: "image/svg+xml",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        };
+        return map[ext] || "application/octet-stream";
+      }
+
+      function doSearch(v) {
+        state.search = v;
+        state.page = 1;
+        render();
+      }
+      function setFilter(f) {
+        state.filter = f;
+        state.page = 1;
+        render();
+      }
+      function setPage(p) {
+        state.page = p;
+        render();
+      }
+      function copyToken(el, uuid) {
+        el.classList.add("copied");
+        el.textContent = "copied!";
+        toast("Token copied", "success");
+        setTimeout(() => {
+          el.classList.remove("copied");
+          el.textContent = uuid.slice(0, 8) + "…";
+        }, 2000);
+      }
+      function copyShareLink(uuid) {
+        toast("Link copied to clipboard", "success");
+      }
+      function openDownload(uuid) {
+        const share = state.shares.find((s) => s.uuid === uuid);
+        navigate("download", { share });
+      }
+      function confirmRevoke(uuid) {
+        state.revokeUuid = uuid;
+        render();
+      }
+
+      function renderRevokeDialog() {
+        return `<div class="overlay" onclick="cancelRevoke()">
+    <div class="dialog" onclick="event.stopPropagation()">
+      <div class="dialog-title">Revoke this share?</div>
+      <div class="dialog-body">The share link will stop working immediately. This cannot be undone.</div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" onclick="cancelRevoke()">Cancel</button>
+        <button class="btn btn-primary" style="background:var(--danger)" onclick="doRevoke()">Revoke</button>
+      </div>
+    </div>
+  </div>`;
+      }
+      function cancelRevoke() {
+        state.revokeUuid = null;
+        render();
+      }
+      function doRevoke() {
+        state.shares = state.shares.filter((s) => s.uuid !== state.revokeUuid);
+        state.revokeUuid = null;
+        toast("Share revoked");
+        render();
+      }
+
+      // ── Create Share ─────────────────────────────────────────
+      function renderCreate() {
+        if (state.createStep === "success") return renderCreateSuccess();
+        const entries = state.filesystem[state.currentPath] || [];
+        const expiryOptions = [
+          ["1h", "1 hour"],
+          ["24h", "1 day"],
+          ["7d", "7 days"],
+          ["30d", "30 days"],
+          ["custom", "Custom"],
+        ];
+
+        return `<div class="admin-wrap">
+    ${renderTopbar("shares")}
+    <div class="admin-content">
+      <div class="page-header">
+        <div><div class="page-title">New Share</div><div class="page-subtitle">Select files and configure share settings</div></div>
+        <button class="btn btn-ghost" onclick="navigate('dashboard')">Cancel</button>
+      </div>
+      ${state.selectedFiles.length > 1 ? `<div class="form-group"><label class="form-label">Share name</label><input class="form-input" placeholder="Give this share a name" value="${state.shareName}" oninput="state.shareName=this.value"></div>` : ""}
+      <div class="create-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              File Browser
+            </span>
+          </div>
+          <div class="breadcrumb">
+            <span class="bc-item" onclick="setPath('/')">files</span>
+            ${
+              state.currentPath !== "/"
+                ? state.currentPath
+                    .split("/")
+                    .filter(Boolean)
+                    .map((seg, i, arr) => {
+                      const path = "/" + arr.slice(0, i + 1).join("/");
+                      return `<span class="bc-sep">/</span><span class="bc-item" onclick="setPath('${path}')">${seg}</span>`;
+                    })
+                    .join("")
+                : ""
+            }
+          </div>
+          <ul class="file-list">
+            ${
+              state.currentPath !== "/"
+                ? `<li class="file-row" onclick="goUp()">
+              <div class="file-row-icon">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 7V4a1 1 0 011-1h4l2 2h5a1 1 0 011 1v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="var(--text-3)" stroke-width="1.3" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="file-row-info"><div class="file-row-name" style="color:var(--text-3)">..</div></div>
+            </li>`
+                : ""
+            }
+            ${entries
+              .map((e) => {
+                const fullPath =
+                  state.currentPath === "/"
+                    ? "/" + e.name
+                    : state.currentPath + "/" + e.name;
+                const isSelected = state.selectedFiles.includes(fullPath);
+                return `<li class="file-row ${isSelected ? "selected" : ""}" onclick="${e.type === "dir" ? `setPath('${fullPath}')` : `toggleFile('${fullPath}',\`${e.mime || ""}\`)`}">
+                <div class="file-row-icon ${isSelected ? "selected" : ""}">
+                  ${
+                    e.type === "dir"
+                      ? `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 7V4a1 1 0 011-1h4l2 2h5a1 1 0 011 1v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="${isSelected ? "var(--accent)" : "var(--text-2)"}" stroke-width="1.3" stroke-linejoin="round"/></svg>`
+                      : mimeIcon(e.mime)
+                  }
+                </div>
+                <div class="file-row-info">
+                  <div class="file-row-name">${e.name}</div>
+                  ${e.type === "file" ? `<div class="file-row-meta">${e.mime ? e.mime.split("/")[1]?.toUpperCase() || "FILE" : "FILE"}</div>` : '<div class="file-row-meta">directory</div>'}
+                </div>
+                ${e.type === "file" ? `<span class="file-row-size">${e.size}</span>` : ""}
+                <div class="selected-indicator ${isSelected ? "visible" : ""}">
+                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 2.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </li>`;
+              })
+              .join("")}
+          </ul>
+          ${
+            state.selectedFiles.length > 0
+              ? `<div style="padding:10px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--text-2)">${state.selectedFiles.length} file${state.selectedFiles.length !== 1 ? "s" : ""} selected</span>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="state.selectedFiles=[];render()">Clear</button>
+          </div>`
+              : ""
+          }
+        </div>
+
+        <div class="settings-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Share Settings</span></div>
+            <div class="panel-body">
+              <div class="settings-section">
+                <div class="settings-label">Expiry</div>
+                <div class="expiry-grid">
+                  ${expiryOptions.map(([k, l], i) => `<button class="expiry-btn ${state.expiryPreset === i ? "active" : ""}" onclick="state.expiryPreset=${i};render()">${l}</button>`).join("")}
+                </div>
+                ${state.expiryPreset === 4 ? `<input type="datetime-local" class="input-small" value="${state.customExpiry}" oninput="state.customExpiry=this.value">` : ""}
+              </div>
+              <div class="settings-section">
+                <div class="settings-label">Download limit</div>
+                <input type="number" class="input-small" placeholder="Unlimited" min="1" value="${state.downloadLimit}" oninput="state.downloadLimit=this.value">
+              </div>
+              <div class="settings-section">
+                <div class="toggle-row">
+                  <div>
+                    <div style="font-size:13px;font-weight:500">Password protection</div>
+                    <div style="font-size:11px;color:var(--text-3)">Recipient must enter a password</div>
+                  </div>
+                  <div class="toggle ${state.passwordEnabled ? "on" : ""}" onclick="state.passwordEnabled=!state.passwordEnabled;render()"></div>
+                </div>
+                ${state.passwordEnabled ? `<div style="margin-top:10px"><input class="input-small" type="password" placeholder="Set a password" value="${state.password}" oninput="state.password=this.value"></div>` : ""}
+                <div class="toggle-row" style="border-bottom:none">
+                  <div>
+                    <div style="font-size:13px;font-weight:500">Mask filenames</div>
+                    <div style="font-size:11px;color:var(--text-3)">Hide real filenames from recipients</div>
+                  </div>
+                  <div class="toggle ${state.maskFilenames ? "on" : ""}" onclick="state.maskFilenames=!state.maskFilenames;render()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%" onclick="createShare()" ${state.selectedFiles.length === 0 ? "disabled" : ""}>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 4H3a2 2 0 000 4h2M10 12h3a2 2 0 000-4h-2M5 8h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Create Share Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+      }
+
+      function setPath(p) {
+        state.currentPath = p;
+        render();
+      }
+      function goUp() {
+        const parts = state.currentPath.split("/").filter(Boolean);
+        parts.pop();
+        state.currentPath = "/" + parts.join("/") || "/";
+        render();
+      }
+      function toggleFile(path) {
+        const i = state.selectedFiles.indexOf(path);
+        if (i === -1) state.selectedFiles.push(path);
+        else state.selectedFiles.splice(i, 1);
+        render();
+      }
+
+      function createShare() {
+        if (state.selectedFiles.length === 0) return;
+        if (state.selectedFiles.length > 1 && !state.shareName.trim()) {
+          toast("Please add a share name for multi-file shares");
+          return;
+        }
+        const expiryMap = [future(0.04), future(1), future(7), future(30)];
+        const uuid = "demo-" + Math.random().toString(36).slice(2, 10);
+        const share = {
+          uuid,
+          name: state.shareName || null,
+          filePaths: [...state.selectedFiles],
+          expires_at: expiryMap[state.expiryPreset] || future(1),
+          download_limit: state.downloadLimit
+            ? parseInt(state.downloadLimit)
+            : null,
+          download_count: 0,
+          hasPassword: state.passwordEnabled && !!state.password,
+          maskFilenames: state.maskFilenames,
+          created_at: new Date().toISOString(),
+          status: "active",
+        };
+        state.shares.unshift(share);
+        state.createdShare = { ...share, plainPassword: state.password };
+        state.createStep = "success";
+        render();
+      }
+
+      function renderCreateSuccess() {
+        const s = state.createdShare;
+        const shareUrl = `https://selfdrop.yourdomain.com/share/${s.uuid}`;
+        const filename = s.name || baseName(s.filePaths[0]);
+        return `<div class="admin-wrap">
+    ${renderTopbar("shares")}
+    <div class="admin-content">
+      <div style="max-width:520px;margin:60px auto;text-align:center">
+        <div class="success-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="var(--accent)" stroke-width="1.5"/><path d="M8 14l4 4 8-8" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 style="font-size:20px;font-weight:500;letter-spacing:-0.02em;margin-bottom:8px">Share link created</h2>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:28px;line-height:1.6">
+          Copy the link below and send it to your recipient.
+          ${s.hasPassword ? " They will be asked for a password." : ""}
+          ${s.maskFilenames ? " Filenames are masked." : ""}
+        </p>
+        <div class="share-url-box">
+          <span class="share-url-text">${shareUrl}</span>
+          <button class="btn btn-secondary" style="flex-shrink:0;font-size:12px;padding:6px 12px" onclick="toast('Link copied!','success')">Copy link</button>
+        </div>
+        <div class="share-details">
+          ${s.name ? `<div class="share-detail-row"><span>Share name</span><span style="font-family:var(--mono);font-size:12px">${s.name}</span></div>` : ""}
+          <div class="share-detail-row"><span>Files</span><span style="font-family:var(--mono);font-size:12px">${s.filePaths.length} file${s.filePaths.length !== 1 ? "s" : ""}</span></div>
+          <div class="share-detail-row"><span>Download limit</span><span style="font-family:var(--mono);font-size:12px">${s.download_limit ?? "Unlimited"}</span></div>
+          ${
+            s.hasPassword
+              ? `<div class="share-detail-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+              <span>Password</span>
+              <span style="font-size:11px;color:var(--warning);display:flex;align-items:center;gap:4px">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3M8 10.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Save this — you won't see it again
+              </span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px">
+              <span id="pw-display" style="font-family:var(--mono);font-size:13px;flex:1">${"•".repeat(s.plainPassword.length || 8)}</span>
+              <button onclick="togglePwReveal()" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:2px;display:flex;align-items:center" title="Show password">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+              </button>
+              <button onclick="toast('Password copied!','success')" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:2px;font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:4px">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M3 11H2a1 1 0 01-1-1V2a1 1 0 011-1h8a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3"/></svg>
+                copy
+              </button>
+            </div>
+          </div>`
+              : '<div class="share-detail-row"><span>Password</span><span style="font-family:var(--mono);font-size:12px">None</span></div>'
+          }
+          <div class="share-detail-row"><span>Filenames masked</span><span style="font-family:var(--mono);font-size:12px">${s.maskFilenames ? "Yes" : "No"}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:24px">
+          <button class="btn btn-ghost" onclick="state.createStep='browse';state.selectedFiles=[];state.shareName='';render()">Create another</button>
+          <button class="btn btn-secondary" onclick="navigate('dashboard')">Back to dashboard</button>
+          <button class="btn btn-primary" onclick="openDownload('${s.uuid}')">Preview download page</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+      }
+
+      let pwRevealed = false;
+      function togglePwReveal() {
+        pwRevealed = !pwRevealed;
+        const el = document.getElementById("pw-display");
+        if (el && state.createdShare)
+          el.textContent = pwRevealed
+            ? state.createdShare.plainPassword
+            : "•".repeat(state.createdShare.plainPassword.length || 8);
+      }
+
+      // ── Download page ─────────────────────────────────────────
+      function renderDownload() {
+        const share = state.downloadShare;
+        if (!share)
+          return `<div class="download-wrap"><div>Share not found.</div></div>`;
+
+        const files = share.filePaths.map((p, i) => ({
+          filename: share.maskFilenames
+            ? `sdrop-${share.uuid.slice(0, 6)}-${i + 1}${p.includes(".") ? "." + p.split(".").pop() : ""}`
+            : baseName(p),
+          mime: getFileMime(p),
+          size: getSizeFromPath(p),
+          path: p,
+        }));
+
+        if (!state.selectedDownloadFiles.size)
+          state.selectedDownloadFiles = new Set(files.map((f) => f.filename));
+        const selected = state.selectedDownloadFiles;
+        const total = files.length;
+        const selCount = selected.size;
+
+        return `<div class="download-wrap" style="flex-direction:column;align-items:center">
+    <div style="width:100%;max-width:560px">
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-branding">${logoSVG(14)} <span style="font-family:var(--mono);font-size:12px;font-weight:500;vertical-align:middle;margin-left:6px">selfdrop</span></div>
+          <div class="download-filename">${share.name || baseName(share.filePaths[0])}</div>
+          <div class="download-meta">
+            <div class="download-meta-item" style="color:${expiringSoon(share.expires_at) ? "var(--warning)" : "inherit"}">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Expires ${formatExpiry(share.expires_at)}
+            </div>
+            <div class="download-meta-item">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${total} file${total !== 1 ? "s" : ""}
+            </div>
+            ${share.download_limit ? `<div class="download-meta-item"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M5 7l3 3 3-3M2 14h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${share.download_limit - share.download_count} downloads left</div>` : ""}
+          </div>
+        </div>
+        <ul style="list-style:none;padding:4px;flex:1;overflow-y:auto;min-height:0">
+          ${files
+            .map((file, i) => {
+              const isSel = selected.has(file.filename);
+              return `<li onclick="toggleDlFile('${file.filename}')" style="display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:${i < files.length - 1 ? "1px solid var(--border)" : "none"};cursor:pointer;background:${isSel ? "var(--accent-light)" : "transparent"};transition:background 0.1s;user-select:none">
+              <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${isSel ? "var(--accent)" : "var(--border-strong)"};background:${isSel ? "var(--accent)" : "var(--surface)"};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">
+                ${isSel ? `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 2.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ""}
+              </div>
+              <div style="width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${isSel ? "var(--accent-light)" : "var(--surface2)"};border:1px solid ${isSel ? "rgba(45,106,79,0.2)" : "var(--border)"};transition:all 0.15s">
+                ${mimeIcon(file.mime)}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${file.filename}</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px">${file.mime?.split("/")[1]?.toUpperCase() || "FILE"} · ${file.size}</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+                <button class="icon-btn" title="Preview" onclick="toast('Preview not available in demo')">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+                </button>
+                <button class="icon-btn" title="Download" onclick="toast('Downloads are disabled in demo mode')">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M5 7l3 3 3-3M2 14h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </li>`;
+            })
+            .join("")}
+        </ul>
+        <div class="dl-footer">
+          <div class="dl-footer__info"><strong>${selCount} of ${total}</strong> selected</div>
+          <div class="dl-footer__actions">
+            ${
+              selCount < total
+                ? `<button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="selectAllDl()">Select all</button>`
+                : `<button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="selectNoneDl()">Deselect all</button>`
+            }
+            <button class="btn btn-secondary" style="font-size:13px;padding:6px 12px" onclick="toast('ZIP downloads are disabled in demo mode')">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V2h6v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Download as ZIP
+            </button>
+          </div>
+        </div>
+        <div class="download-footer">
+          <span>Shared securely via <a href="../" style="color:var(--accent)">SelfDrop</a></span>
+          <span>·</span>
+          <span>Self-hosted file sharing</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;text-align:center">
+        <button class="btn btn-ghost" onclick="navigate('dashboard')">← Back to dashboard</button>
+      </div>
+    </div>
+  </div>`;
+      }
+
+      function getSizeFromPath(path) {
+        const name = baseName(path);
+        const allFiles = Object.values(state.filesystem).flat();
+        const found = allFiles.find((f) => f.name === name);
+        return found?.size || "—";
+      }
+
+      function toggleDlFile(name) {
+        state.selectedDownloadFiles.has(name)
+          ? state.selectedDownloadFiles.delete(name)
+          : state.selectedDownloadFiles.add(name);
+        render();
+      }
+      function selectAllDl() {
+        if (state.downloadShare) {
+          state.selectedDownloadFiles = new Set(
+            state.downloadShare.filePaths.map((_, i) =>
+              state.downloadShare.maskFilenames
+                ? `sdrop-${state.downloadShare.uuid.slice(0, 6)}-${i + 1}`
+                : baseName(state.downloadShare.filePaths[i]),
+            ),
+          );
+          render();
+        }
+      }
+      function selectNoneDl() {
+        state.selectedDownloadFiles = new Set();
+        render();
+      }
+
+      // ── Settings ─────────────────────────────────────────────
+      function renderSettings() {
+        return `<div class="admin-wrap">
+    ${renderTopbar("settings")}
+    <div class="admin-content" style="max-width:680px">
+      <div class="page-header"><div><div class="page-title">Settings</div><div class="page-subtitle">Manage your SelfDrop instance</div></div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);background:var(--surface2)">
+          <div style="font-size:14px;font-weight:500">Share Defaults</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px">Applied automatically when creating a new share</div>
+        </div>
+        <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group"><label class="form-label">Default expiry</label><input class="form-input" value="24" type="number" placeholder="Hours" oninput="toast('Settings are read-only in demo mode')"></div>
+          <div class="form-group"><label class="form-label">Download limit</label><input class="form-input" value="" placeholder="Unlimited" oninput="toast('Settings are read-only in demo mode')"></div>
+        </div>
+        <div style="padding:0 20px 20px">
+          <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" onclick="toast('Settings are read-only in demo mode')">Save defaults</button>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);background:var(--surface2)">
+          <div style="font-size:14px;font-weight:500">Application Info</div>
+        </div>
+        <div style="padding:20px">
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
+              <span style="color:var(--text-2)">Current version</span>
+              <span style="font-family:var(--mono);font-size:11px">v0.1.0</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;font-size:13px">
+              <span style="color:var(--text-2)">Latest version</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:var(--mono);font-size:11px">v0.1.0</span>
+                <span style="font-size:11px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:100px;font-family:var(--mono)">up to date</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-secondary" style="font-size:13px;padding:7px 14px" onclick="toast('Update check disabled in demo mode')">Check for updates</button>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(192,57,43,0.25);border-radius:var(--radius);overflow:hidden;margin-bottom:20px">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);background:var(--danger-light)">
+          <div style="font-size:14px;font-weight:500;color:var(--danger)">Danger Zone</div>
+        </div>
+        <div style="padding:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-size:13px;font-weight:500">Revoke all active shares</div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Immediately invalidates all active share links</div></div>
+            <button class="btn" style="background:transparent;color:var(--danger);border:1px solid rgba(192,57,43,0.2);font-size:13px;padding:6px 12px" onclick="toast('Disabled in demo mode')">Revoke all</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0">
+            <div><div style="font-size:13px;font-weight:500">Clear expired shares</div><div style="font-size:12px;color:var(--text-2);margin-top:3px">Remove expired share records from the database</div></div>
+            <button class="btn" style="background:transparent;color:var(--danger);border:1px solid rgba(192,57,43,0.2);font-size:13px;padding:6px 12px" onclick="toast('Disabled in demo mode')">Clear expired</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+      }
+
+      // ── Main render ───────────────────────────────────────────
+      function render() {
+        const app = document.getElementById("app");
+        switch (state.view) {
+          case "dashboard":
+            app.innerHTML = renderDashboard();
+            break;
+          case "create":
+            app.innerHTML = renderCreate();
+            break;
+          case "download":
+            app.innerHTML = renderDownload();
+            break;
+          case "settings":
+            app.innerHTML = renderSettings();
+            break;
+          default:
+            app.innerHTML = renderDashboard();
+        }
+      }
+
+      // ── Init ─────────────────────────────────────────────────
+      if (state.dark) document.documentElement.classList.add("dark");
+      render();
+    </script>
+  </body>
+</html>

@@ -44,15 +44,15 @@ jobs:
 
       # ── Docker meta ────────────────────────────────────────
       # Generates tags:
-      #   miraibyteslabs/selfdrop:latest
-      #   miraibyteslabs/selfdrop:0.1.0
-      #   miraibyteslabs/selfdrop:0.1        (minor)
-      #   miraibyteslabs/selfdrop:0          (major)
+      #   miraibytes/selfdrop:latest
+      #   miraibytes/selfdrop:0.1.0
+      #   miraibytes/selfdrop:0.1        (minor)
+      #   miraibytes/selfdrop:0          (major)
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: miraibyteslabs/selfdrop
+          images: miraibytes/selfdrop
           tags: |
             type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
@@ -99,7 +99,7 @@ jobs:
       # ── Verify ─────────────────────────────────────────────
       - name: Verify image manifest
         run: |
-          docker buildx imagetools inspect miraibyteslabs/selfdrop:${{ steps.version.outputs.bare }}
+          docker buildx imagetools inspect miraibytes/selfdrop:${{ steps.version.outputs.bare }}
 
       # ── GitHub Release ─────────────────────────────────────
       # Creates a GitHub release with the image digest and install snippet.
@@ -116,7 +116,7 @@ jobs:
             ```yaml
             services:
               selfdrop:
-                image: miraibyteslabs/selfdrop:${{ steps.version.outputs.bare }}
+                image: miraibytes/selfdrop:${{ steps.version.outputs.bare }}
                 restart: unless-stopped
                 ports:
                   - "8080:80"

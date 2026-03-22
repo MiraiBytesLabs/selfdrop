@@ -26,7 +26,8 @@ services:
       - "3000:3000"
     volumes:
       # Files to share — point to your actual files directory
-      - "/d/Apple Music:/data/files:ro"
+      - "/path/to/your/files:/data/files:ro"
+      - "/path/to/your/different-files:/data/files:ro"
       # Database persistence
       - selfdrop-db:/data/db
     environment:

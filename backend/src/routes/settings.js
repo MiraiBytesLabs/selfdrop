@@ -4,6 +4,7 @@ const express = require("express");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
+const https = require("https");
 const db = require("../db/index");
 const { getAllSettings, saveSettings } = require("../db/settings");
 const requireAuth = require("../middleware/requireAuth");
@@ -132,6 +133,7 @@ router.get("/storage", async (_req, res) => {
       zipTempDir: {
         path: zipDir,
         exists: fs.existsSync(zipDir),
+        fileCount: await statDir(zipDir).then((s) => s.count),
       },
       system: {
         platform: process.platform,
@@ -191,6 +193,74 @@ router.post("/clear-expired", (req, res) => {
   }
 });
 
+// ── POST /api/admin/clear-tmp ────────────────────────────
+// Deletes all temp ZIP files from the ZIP temp directory.
+router.post("/clear-tmp", async (req, res) => {
+  try {
+    const zipDir = config.zipTempDir;
+
+    if (!fs.existsSync(zipDir)) {
+      return res.json({
+        message: "Temp directory is already empty.",
+        count: 0,
+      });
+    }
+
+    const files = await fs.promises.readdir(zipDir);
+    const zips = files.filter((f) => f.endsWith(".zip"));
+    let deleted = 0;
+
+    for (const file of zips) {
+      try {
+        await fs.promises.unlink(path.join(zipDir, file));
+        deleted++;
+      } catch {
+        /* skip locked/already deleted */
+      }
+    }
+
+    res.json({
+      message: `${deleted} temp file${deleted !== 1 ? "s" : ""} cleared.`,
+      count: deleted,
+    });
+  } catch (err) {
+    console.error("[settings] clear-tmp error:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+// ── GET /api/settings/app-info ────────────────────────
+// Returns current version and checks GitHub for latest release.
+// Fetch is done server-side to avoid CORS issues.
+router.get("/app-info", async (_req, res) => {
+  const pkg = require("../../package.json");
+  const currentVersion = pkg.version;
+
+  let latestVersion = null;
+  let latestUrl = null;
+  let upToDate = null;
+  let updateError = null;
+
+  try {
+    const release = await fetchGitHubRelease("MiraiBytesLabs", "selfdrop");
+    latestVersion = release.tag_name?.replace(/^v/, "") ?? null;
+    latestUrl = release.html_url ?? null;
+    upToDate = latestVersion
+      ? !isNewerVersion(latestVersion, currentVersion)
+      : null;
+  } catch (err) {
+    updateError = err.message;
+  }
+
+  res.json({
+    currentVersion,
+    latestVersion,
+    latestUrl,
+    upToDate,
+    updateError,
+  });
+});
+
 // ── Helpers ───────────────────────────────────────────────
 
 function isValidUrl(str) {
@@ -229,6 +299,64 @@ function humanSize(bytes) {
     unit++;
   }
   return `${value % 1 === 0 ? value : value.toFixed(1)} ${units[unit]}`;
+}
+
+/**
+ * Fetches the latest release from GitHub API.
+ * Returns a promise resolving to the release object.
+ */
+function fetchGitHubRelease(owner, repo) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: "api.github.com",
+      path: `/repos/${owner}/${repo}/releases/latest`,
+      headers: {
+        "User-Agent": "selfdrop-app",
+        Accept: "application/vnd.github.v3+json",
+      },
+      timeout: 5000,
+    };
+
+    const req = https.get(options, (resp) => {
+      if (resp.statusCode === 404) {
+        return reject(new Error("No releases found."));
+      }
+      if (resp.statusCode !== 200) {
+        return reject(new Error(`GitHub API returned ${resp.statusCode}.`));
+      }
+
+      let data = "";
+      resp.on("data", (chunk) => {
+        data += chunk;
+      });
+      resp.on("end", () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          reject(new Error("Failed to parse GitHub response."));
+        }
+      });
+    });
+
+    req.on("error", reject);
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("GitHub API request timed out."));
+    });
+  });
+}
+
+/**
+ * Returns true if `candidate` is a newer semver than `current`.
+ * Simple major.minor.patch comparison — no pre-release handling.
+ */
+function isNewerVersion(candidate, current) {
+  const parse = (v) => v.split(".").map((n) => parseInt(n, 10) || 0);
+  const [cMaj, cMin, cPat] = parse(candidate);
+  const [eMaj, eMin, ePat] = parse(current);
+  if (cMaj !== eMaj) return cMaj > eMaj;
+  if (cMin !== eMin) return cMin > eMin;
+  return cPat > ePat;
 }
 
 module.exports = router;

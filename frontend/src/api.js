@@ -64,3 +64,5 @@ export const saveSettings = (body) => request("PUT", "/api/settings", body);
 export const getStorageInfo = () => request("GET", "/api/settings/storage");
 export const revokeAllShares = () => request("POST", "/api/admin/revoke-all");
 export const clearExpired = () => request("POST", "/api/admin/clear-expired");
+export const clearTmp = () => request("POST", "/api/admin/clear-tmp");
+export const getAppInfo = () => request("GET", "/api/settings/app-info");

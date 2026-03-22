@@ -8,6 +8,8 @@ import {
   getStorageInfo,
   revokeAllShares,
   clearExpired,
+  clearTmp,
+  getAppInfo,
   logout,
   changePassword,
 } from "../api.js";
@@ -52,6 +54,10 @@ export default function Settings({ onNavigate }) {
   const [publicUrl, setPublicUrl] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
 
+  // ── App info ─────────────────────────────────────────────
+  const [appInfo, setAppInfo] = useState(null);
+  const [appInfoLoading, setAppInfoLoading] = useState(false);
+
   // ── Danger zone ───────────────────────────────────────────
   const [dangerDialog, setDangerDialog] = useState(null);
   const [dangerInput, setDangerInput] = useState("");
@@ -63,10 +69,12 @@ export default function Settings({ onNavigate }) {
 
   async function loadAll() {
     setLoading(true);
-    const [{ data: s }, { data: st }] = await Promise.all([
+    const [{ data: s }, { data: st }, { data: ai }] = await Promise.all([
       getSettings(),
       getStorageInfo(),
+      getAppInfo(),
     ]);
+    if (ai) setAppInfo(ai);
     if (s) {
       setSettings(s);
       setDefaultExpiry(s.default_expiry_hours || "24");
@@ -76,6 +84,13 @@ export default function Settings({ onNavigate }) {
     }
     if (st) setStorage(st);
     setLoading(false);
+  }
+
+  async function refreshAppInfo() {
+    setAppInfoLoading(true);
+    const { data } = await getAppInfo();
+    if (data) setAppInfo(data);
+    setAppInfoLoading(false);
   }
 
   // ── Change password ───────────────────────────────────────
@@ -150,7 +165,12 @@ export default function Settings({ onNavigate }) {
   async function confirmDanger() {
     if (dangerInput !== "confirm") return;
     setDangerLoading(true);
-    const fn = dangerDialog === "revoke-all" ? revokeAllShares : clearExpired;
+    const fn =
+      dangerDialog === "revoke-all"
+        ? revokeAllShares
+        : dangerDialog === "clear-expired"
+          ? clearExpired
+          : clearTmp;
     const { data, error } = await fn();
     setDangerLoading(false);
     setDangerDialog(null);
@@ -372,6 +392,86 @@ export default function Settings({ onNavigate }) {
           )}
         </Section>
 
+        {/* ── Application Info ───────────────────────────── */}
+        <Section
+          title="Application Info"
+          subtitle="Version and update information"
+        >
+          {appInfo ? (
+            <div className="info-table">
+              <InfoRow
+                label="Current version"
+                value={`v${appInfo.currentVersion}`}
+                mono
+              />
+              <div className="info-row" style={{ alignItems: "center" }}>
+                <span className="info-row__label">Latest version</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {appInfo.updateError ? (
+                    <span style={{ fontSize: 12, color: "var(--text-3)" }}>
+                      Unable to check
+                    </span>
+                  ) : appInfo.latestVersion ? (
+                    <>
+                      <span className="info-row__value info-row__value--mono">
+                        v{appInfo.latestVersion}
+                      </span>
+                      {appInfo.upToDate ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            background: "var(--accent-light)",
+                            color: "var(--accent)",
+                            padding: "2px 8px",
+                            borderRadius: 100,
+                            fontFamily: "var(--mono)",
+                          }}
+                        >
+                          up to date
+                        </span>
+                      ) : (
+                        <a
+                          href={appInfo.latestUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: 11,
+                            background: "var(--warning-light)",
+                            color: "var(--warning)",
+                            padding: "2px 8px",
+                            borderRadius: 100,
+                            fontFamily: "var(--mono)",
+                            textDecoration: "none",
+                            fontWeight: 500,
+                          }}
+                        >
+                          update available ↗
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "var(--text-3)" }}>
+                      —
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: "var(--text-3)" }}>Loading…</div>
+          )}
+          <div style={{ marginTop: 16 }}>
+            <button
+              className="btn btn-secondary"
+              onClick={refreshAppInfo}
+              disabled={appInfoLoading}
+              style={{ fontSize: 13, padding: "7px 14px" }}
+            >
+              {appInfoLoading ? "Checking…" : "Check for updates"}
+            </button>
+          </div>
+        </Section>
+
         {/* ── Danger Zone ────────────────────────────────── */}
         <Section title="Danger Zone" danger>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -386,6 +486,12 @@ export default function Settings({ onNavigate }) {
               description="Removes expired and limit-reached share records from the database. Frees up space, cannot be undone."
               buttonLabel="Clear expired"
               onClick={() => openDanger("clear-expired")}
+            />
+            <DangerRow
+              title="Clear temp ZIP directory"
+              description="Deletes all temporary ZIP files created for downloads. These clean up automatically but you can force it here."
+              buttonLabel="Clear tmp"
+              onClick={() => openDanger("clear-tmp")}
             />
           </div>
         </Section>

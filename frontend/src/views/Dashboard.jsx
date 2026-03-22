@@ -14,6 +14,10 @@ export default function Dashboard({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [revokeUuid, setRevokeUuid] = useState(null);
   const [revoking, setRevoking] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all"); // all | active | expired | limit_reached
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const showToast = useToast();
   const { clearToken } = useAuth();
   const { shareBase } = useShareUrl();
@@ -21,6 +25,11 @@ export default function Dashboard({ onNavigate }) {
   useEffect(() => {
     fetchShares();
   }, []);
+
+  // Reset to page 1 whenever search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter]);
 
   async function fetchShares() {
     setLoading(true);
@@ -70,6 +79,24 @@ export default function Dashboard({ onNavigate }) {
     if (s.status !== "active") return false;
     return new Date(s.expiresAt) - new Date() < 86400000;
   }).length;
+
+  // ── Derived state ────────────────────────────────────
+  const filtered = shares
+    .filter((s) => filter === "all" || s.status === filter)
+    .filter((s) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      const name = (s.name || "").toLowerCase();
+      const file = (s.filePaths?.[0]?.split("/").pop() || "").toLowerCase();
+      return name.includes(q) || file.includes(q);
+    });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <div className="admin-wrap view-enter">
@@ -127,8 +154,108 @@ export default function Dashboard({ onNavigate }) {
 
         {/* Table */}
         <div className="table-card">
-          <div className="table-header">
+          <div className="table-header" style={{ flexWrap: "wrap", gap: 10 }}>
             <span className="table-title">All Shares</span>
+            {/* Search */}
+            <div style={{ position: "relative", marginLeft: "auto" }}>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                style={{
+                  position: "absolute",
+                  left: 9,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-3)",
+                  pointerEvents: "none",
+                }}
+              >
+                <circle
+                  cx="6.5"
+                  cy="6.5"
+                  r="4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                />
+                <path
+                  d="M10 10l3 3"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search shares…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  paddingLeft: 28,
+                  paddingRight: 10,
+                  paddingTop: 6,
+                  paddingBottom: 6,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius)",
+                  background: "var(--surface)",
+                  color: "var(--text)",
+                  fontFamily: "var(--sans)",
+                  fontSize: 12,
+                  outline: "none",
+                  width: 180,
+                  transition: "border-color 0.15s",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
+            </div>
+          </div>
+
+          {/* Filter pills */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              padding: "10px 20px",
+              borderBottom: "1px solid var(--border)",
+              flexWrap: "wrap",
+            }}
+          >
+            {[
+              { key: "all", label: "All" },
+              { key: "active", label: "Active" },
+              { key: "expired", label: "Expired" },
+              { key: "limit_reached", label: "Limit Reached" },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                style={{
+                  padding: "3px 10px",
+                  borderRadius: 100,
+                  fontSize: 11,
+                  fontFamily: "var(--mono)",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  borderColor:
+                    filter === key ? "var(--accent)" : "var(--border)",
+                  background:
+                    filter === key ? "var(--accent-light)" : "var(--surface)",
+                  color: filter === key ? "var(--accent)" : "var(--text-3)",
+                  fontWeight: filter === key ? 500 : 400,
+                }}
+                className="dashboard-filter--pill"
+              >
+                {label}
+                <span style={{ marginLeft: 5, opacity: 0.7 }}>
+                  {key === "all"
+                    ? shares.length
+                    : shares.filter((s) => s.status === key).length}
+                </span>
+              </button>
+            ))}
           </div>
 
           {loading ? (
@@ -144,29 +271,173 @@ export default function Dashboard({ onNavigate }) {
             </div>
           ) : shares.length === 0 ? (
             <EmptyState onNavigate={onNavigate} />
+          ) : filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "40px",
+                textAlign: "center",
+                color: "var(--text-3)",
+                fontSize: 13,
+              }}
+            >
+              No shares match your search or filter.
+            </div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>File</th>
-                  <th>Token</th>
-                  <th>Status</th>
-                  <th>Downloads</th>
-                  <th>Expires</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {shares.map((share) => (
-                  <ShareRow
-                    key={share.uuid}
-                    share={share}
-                    onCopy={() => copyLink(share.uuid)}
-                    onRevoke={() => setRevokeUuid(share.uuid)}
-                  />
-                ))}
-              </tbody>
-            </table>
+            <>
+              <table>
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Token</th>
+                    <th>Status</th>
+                    <th>Downloads</th>
+                    <th>Expires</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((share) => (
+                    <ShareRow
+                      key={share.uuid}
+                      share={share}
+                      onCopy={() => copyLink(share.uuid)}
+                      onRevoke={() => setRevokeUuid(share.uuid)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 20px",
+                    borderTop: "1px solid var(--border)",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-3)",
+                      fontFamily: "var(--mono)",
+                    }}
+                  >
+                    {(currentPage - 1) * PAGE_SIZE + 1}–
+                    {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}
+                    {filtered.length}
+                  </span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      className="icon-btn"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      title="Previous page"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 3L5 8l5 5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(
+                        (p) =>
+                          p === 1 ||
+                          p === totalPages ||
+                          Math.abs(p - currentPage) <= 1,
+                      )
+                      .reduce((acc, p, idx, arr) => {
+                        if (idx > 0 && p - arr[idx - 1] > 1) acc.push("…");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        p === "…" ? (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            style={{
+                              width: 28,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 12,
+                              color: "var(--text-3)",
+                            }}
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p)}
+                            style={{
+                              borderRadius: "var(--radius)",
+                              border: "1px solid",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontFamily: "var(--mono)",
+                              transition: "all 0.15s",
+                              borderColor:
+                                p === currentPage
+                                  ? "var(--accent)"
+                                  : "var(--border)",
+                              background:
+                                p === currentPage
+                                  ? "var(--accent-light)"
+                                  : "var(--surface)",
+                              color:
+                                p === currentPage
+                                  ? "var(--accent)"
+                                  : "var(--text-2)",
+                              fontWeight: p === currentPage ? 500 : 400,
+                            }}
+                            className="dashboard-pagination--btn"
+                          >
+                            {p}
+                          </button>
+                        ),
+                      )}
+                    <button
+                      className="icon-btn"
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      title="Next page"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M6 3l5 5-5 5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

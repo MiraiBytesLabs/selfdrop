@@ -360,51 +360,28 @@ export default function Download({ uuid }) {
                 </div>
 
                 {/* File icon */}
-                {file.mimeType?.startsWith("image/") ? (
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 4,
-                      overflow: "hidden",
-                      flexShrink: 0,
-                      border: "1px solid var(--border)",
-                      background: "var(--surface2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <FileTypeIcon
-                      mimeType={file.mimeType}
-                      size={18}
-                      color="var(--text-3)"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 6,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      background: isSelected
-                        ? "var(--accent-light)"
-                        : "var(--surface2)",
-                      border: `1px solid ${isSelected ? "rgba(45,106,79,0.2)" : "var(--border)"}`,
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    <FileTypeIcon
-                      mimeType={file.mimeType}
-                      size={16}
-                      color={isSelected ? "var(--accent)" : "var(--text-2)"}
-                    />
-                  </div>
-                )}
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    background: isSelected
+                      ? "var(--accent-light)"
+                      : "var(--surface2)",
+                    border: `1px solid ${isSelected ? "rgba(45,106,79,0.2)" : "var(--border)"}`,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <FileTypeIcon
+                    mimeType={file.mimeType}
+                    size={16}
+                    color={isSelected ? "var(--accent)" : "var(--text-2)"}
+                  />
+                </div>
 
                 {/* File info */}
                 <div style={{ flex: 1, minWidth: 0 }}>

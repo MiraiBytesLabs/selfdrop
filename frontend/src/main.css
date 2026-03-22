@@ -995,6 +995,7 @@ tr:hover td     { background: var(--surface2); }
     max-width: 100%;
     height: 100vh;
     max-height: 100vh;
+    max-height: 100dvh;
   }
   .download-header--list { padding: 14px 14px 12px; }
 
@@ -1017,8 +1018,8 @@ tr:hover td     { background: var(--surface2); }
   .dl-footer__btn { font-size: 12px; padding: 6px 10px; }
 
   /* ZIP label — shorten on tiny screens */
-  .dl-footer__zip-label::before { content: 'ZIP'; }
-  .dl-footer__zip-label { display: none; }
+  /* .dl-footer__zip-label::before { content: 'ZIP'; } */
+  /* .dl-footer__zip-label { display: none; } */
 
   /* Branding footer */
   .download-wrap--list > div[style*="margin-top"] {
@@ -1099,7 +1100,7 @@ tr:hover td     { background: var(--surface2); }
   .topbar-nav-item.active { font-weight: 500; }
 
   /* Logo — hide text, keep mark */
-  .logo span { display: none; }
+  /* .logo span { display: none; } */
 }
 
 /* ── Dashboard ───────────────────────────────────────────── */

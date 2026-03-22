@@ -1154,6 +1154,8 @@ tr:hover td     { background: var(--surface2); }
 @media (max-width: 480px) {
   th, td { padding: 9px 10px; }
 
+  .td-filename { font-size: 11px; gap: 6px; }
+
   /* Status badge — just a dot on very small screens */
   .badge { padding: 2px 6px; font-size: 10px; }
 
@@ -1269,7 +1271,7 @@ tr:hover td     { background: var(--surface2); }
 @media (max-width: 480px) {
   /* Full-bleed table on phone */
   .table-card { border-radius: 6px; }
-  th, td { padding: 8px 10px; font-size: 12px; }
+  th, td { padding: 8px 10px; font-size: 12px; max-width: 45vw;}
 }
 /* ── Dark mode toggle in avatar menu ─────────────────────── */
 .mini-toggle {

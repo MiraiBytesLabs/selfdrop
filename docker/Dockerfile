@@ -21,7 +21,7 @@
 #     selfdrop
 
 # ── Stage 1: Frontend (React + Vite) ─────────────────────
-FROM node:20-alpine AS frontend-build
+FROM node:24-alpine AS frontend-build
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
@@ -29,14 +29,14 @@ COPY frontend/ .
 RUN npm run build
 
 # ── Stage 2: Backend ──────────────────────────────────────
-FROM node:20-alpine AS backend-build
+FROM node:24-alpine AS backend-build
 WORKDIR /build/backend
 COPY backend/package.json backend/package-lock.json* ./
 RUN npm ci --omit=dev
 COPY backend/src ./src
 
 # ── Stage 3: Final image ──────────────────────────────────
-FROM node:20-alpine
+FROM node:24-alpine
 
 LABEL org.opencontainers.image.title="SelfDrop"
 LABEL org.opencontainers.image.description="Self-hosted file sharing"
@@ -82,6 +82,8 @@ EXPOSE 80 3000
 
 # ── Health check ──────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD wget -qO- http://localhost:3000/health || exit 1
 
 ENTRYPOINT ["/start.sh"]
+
+

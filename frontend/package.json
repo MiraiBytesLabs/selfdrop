@@ -1,6 +1,7 @@
 {
   "name": "selfdrop-frontend",
   "version": "0.1.0",
+  "description": "SelfDrop — Share files directly from your own server.",
   "private": true,
   "type": "module",
   "scripts": {

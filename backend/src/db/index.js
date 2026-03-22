@@ -1,27 +1,15 @@
-"use strict";
+import Database from 'better-sqlite3';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+import config from '../config.js';
 
-const Database = require("better-sqlite3");
-const path = require("path");
-const fs = require("fs");
-const config = require("../config");
-
-// Ensure the directory for the DB file exists.
-// In Docker this will be the mounted /data/db volume.
-const dbDir = path.dirname(config.dbPath);
-fs.mkdirSync(dbDir, { recursive: true });
+mkdirSync(dirname(config.dbPath), { recursive: true });
 
 const db = new Database(config.dbPath);
 
-// Enable WAL mode — better concurrency and performance for SQLite.
-db.pragma("journal_mode = WAL");
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
-// Enforce foreign keys — SQLite disables them by default.
-db.pragma("foreign_keys = ON");
-
-/**
- * Create tables if they don't exist.
- * This runs on every startup — safe to call multiple times.
- */
 db.exec(`
   CREATE TABLE IF NOT EXISTS shares (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,9 +22,9 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS share_files (
-    id       INTEGER PRIMARY KEY AUTOINCREMENT,
-    share_id INTEGER NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
-    file_path TEXT   NOT NULL
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    share_id  INTEGER NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
+    file_path TEXT    NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS admin (
@@ -47,15 +35,10 @@ db.exec(`
   );
 `);
 
-// ── Migrations ───────────────────────────────────────────
-// Safe to run on every startup — silently ignored if column already exists.
-
+// ── Migrations ────────────────────────────────────────────
 const migrations = [
-  // v1.1 — filename masking
   `ALTER TABLE shares ADD COLUMN mask_filenames INTEGER NOT NULL DEFAULT 0`,
-  // v1.2 — share name
   `ALTER TABLE shares ADD COLUMN name TEXT`,
-  // v1.3 — settings table
   `CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -63,13 +46,9 @@ const migrations = [
 ];
 
 for (const migration of migrations) {
-  try {
-    db.exec(migration);
-  } catch {
-    // Column/index already exists — expected on all startups after first
-  }
+  try { db.exec(migration); } catch { /* already applied */ }
 }
 
 console.log(`[db] SQLite connected: ${config.dbPath}`);
 
-module.exports = db;
+export default db;

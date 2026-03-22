@@ -1,70 +1,46 @@
-"use strict";
-
-const express = require("express");
-const config = require("./config");
-
-const fsRouter = require("./routes/fs");
-const sharesRouter = require("./routes/shares");
-const authRouter = require("./routes/auth");
-const downloadRouter = require("./routes/download");
-const settingsRouter = require("./routes/settings");
-const requireAuth = require("./middleware/requireAuth");
+import express from 'express';
+import { fileURLToPath } from 'url';
+import config from './config.js';
+import fsRouter       from './routes/fs.js';
+import sharesRouter   from './routes/shares.js';
+import authRouter     from './routes/auth.js';
+import downloadRouter from './routes/download.js';
+import settingsRouter from './routes/settings.js';
+import requireAuth    from './middleware/requireAuth.js';
 
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────
 app.use(express.json());
 
-// Basic request logger
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()}  ${req.method}  ${req.path}`);
   next();
 });
 
 // ── Routes ────────────────────────────────────────────────
+app.get('/health', (_req, res) => res.json({ status: 'ok', version: process.env.npm_package_version || '1.0.0' }));
 
-// Health check
-app.get("/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    version: process.env.npm_package_version || "0.1.0",
-  });
-});
+app.use('/api/auth',     authRouter);
+app.use('/api/fs',       requireAuth, fsRouter);
+app.use('/api/shares',   requireAuth, sharesRouter);
+app.use('/s',            downloadRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/admin',    settingsRouter);
 
-// Auth — public
-app.use("/api/auth", authRouter);
+// ── 404 ───────────────────────────────────────────────────
+app.use((_req, res) => res.status(404).json({ error: 'Not found.' }));
 
-// Filesystem API — protected
-app.use("/api/fs", requireAuth, fsRouter);
-
-// Share management — protected
-app.use("/api/shares", requireAuth, sharesRouter);
-
-// Download handler — public, self-validates via share token
-app.use("/s", downloadRouter);
-
-// Settings, storage info, danger zone — protected
-app.use("/api/settings", settingsRouter);
-app.use("/api/admin", settingsRouter);
-
-// ── 404 catch-all ────────────────────────────────────────
-app.use((_req, res) => {
-  res.status(404).json({ error: "Not found." });
-});
-
-// ── Global error handler ─────────────────────────────────
-// eslint-disable-next-line no-unused-vars
+// ── Global error handler ──────────────────────────────────
+// Express 5 passes async errors automatically — no need for next(err) wrappers
 app.use((err, _req, res, _next) => {
-  console.error("[unhandled]", err);
-  res
-    .status(err.status || 500)
-    .json({ error: err.message || "Internal server error." });
+  console.error('[unhandled]', err);
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error.' });
 });
 
-// ── Start ─────────────────────────────────────────────────
-// Only start the HTTP server when this file is run directly (not required by tests).
-// This allows supertest to import the app without binding to a port.
-if (require.main === module) {
+// ── Start — only when run directly, not when imported by tests ──────────
+// ESM equivalent of `if (require.main === module)`
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(config.port, () => {
     console.log(`SelfDrop backend listening on port ${config.port}`);
     console.log(`FILES_ROOT: ${config.filesRoot}`);
@@ -72,4 +48,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = app;
+export default app;

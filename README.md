@@ -62,9 +62,7 @@ Open `http://localhost:8080` and complete the one-time setup.
 ```yaml
 services:
   selfdrop:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: miraibytes/selfdrop:latest
     container_name: selfdrop
     restart: unless-stopped
     ports:
@@ -211,11 +209,11 @@ npm test
 
 ## ![Desktop Dashboard](docs/screenshots/desktop-dashboard.png)
 
-|                                                                                                                      |                                                                                                                         |                                                                                                                     |
-| :------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------: |
-| <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-dashboard-dark.png"> blah |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-dashboard-light.png">     |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-fileBrowser.png">     |
-|        <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-login.png">        | <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-passwordProtectedShare.png"> |    <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-shareCreated.png">    |
-|     <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedItems.png">     |   <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedImagePreview.png">   | <img width="1604" alt="screen shot 2017-08-07 at 12 18 15 pm" src="docs/screenshots/mobile-sharedVideoPreview.png"> |
+|                                                                                                                                                                           |                                                                                                                                                                                             |                                                                                                                                                                                     |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| <img width="1604" alt="Mobile Dashboard Dark" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-dashboard-dark.PNG"> |         <img width="1604" alt="Mobile Dashboard Light" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-dashboard-light.PNG">         |        <img width="1604" alt="Mobile File Browser" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-fileBrowser.PNG">         |
+|          <img width="1604" alt="Mobile Login" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-login.PNG">          | <img width="1604" alt="Mobile Password Protected Share" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-passwordProtectedShare.PNG"> |       <img width="1604" alt="Mobile Share Created" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-shareCreated.PNG">        |
+|   <img width="1604" alt="Mobile Shared Items" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-sharedItems.PNG">    |     <img width="1604" alt="Mobile Shared Image Preview" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-sharedImagePreview.PNG">     | <img width="1604" alt="Mobile Shared Video Preview" src="https://raw.githubusercontent.com/MiraiBytesLabs/selfdrop/refs/heads/main/docs/screenshots/mobile-sharedVideoPreview.PNG"> |
 
 ## Contributing
 

@@ -65,10 +65,34 @@ export default function Dashboard({ onNavigate }) {
 
   function copyLink(uuid) {
     const url = buildShareUrl(shareBase, uuid);
-    navigator.clipboard
-      .writeText(url)
-      .then(() => showToast("Share link copied.", "success"))
-      .catch(() => showToast("Could not copy to clipboard.", "error"));
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => showToast("Share link copied.", "success"))
+        .catch(() => showToast("Could not copy to clipboard.", "error"));
+      return;
+    }
+
+    // HTTP fallback
+    try {
+      const el = document.createElement("textarea");
+      el.value = url;
+      el.setAttribute("readonly", "");
+      el.style.position = "absolute";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(el);
+      if (success) {
+        showToast("Share link copied.", "success");
+      } else {
+        showToast("Could not copy to clipboard.", "error");
+      }
+    } catch {
+      showToast("Could not copy to clipboard.", "error");
+    }
   }
 
   // ── Stats ────────────────────────────────────────────────

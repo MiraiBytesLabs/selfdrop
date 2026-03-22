@@ -222,10 +222,7 @@ export default function CreateShare({ onNavigate }) {
               <button
                 className="btn btn-secondary"
                 onClick={() => {
-                  navigator.clipboard.writeText(shareUrl).then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  });
+                  copyToClipboard(shareUrl, setCopied);
                 }}
                 style={{ flexShrink: 0 }}
               >
@@ -397,10 +394,7 @@ export default function CreateShare({ onNavigate }) {
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard.writeText(password).then(() => {
-                          setPwCopied(true);
-                          setTimeout(() => setPwCopied(false), 2000);
-                        });
+                        copyToClipboard(password, setPwCopied);
                       }}
                       style={{
                         background: "none",
@@ -1017,6 +1011,36 @@ export default function CreateShare({ onNavigate }) {
       </div>
     </div>
   );
+}
+
+function copyToClipboard(shareUrl, setter) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        setter(true);
+        setTimeout(() => setter(false), 2000);
+      })
+      .catch(() => {});
+    return;
+  }
+
+  // HTTP fallback
+  try {
+    const el = document.createElement("textarea");
+    el.value = shareUrl;
+    el.setAttribute("readonly", "");
+    el.style.position = "absolute";
+    el.style.left = "-9999px";
+    document.body.appendChild(el);
+    el.select();
+    const success = document.execCommand("copy");
+    document.body.removeChild(el);
+    if (success) {
+      setter(true);
+      setTimeout(() => setter(false), 2000);
+    }
+  } catch {}
 }
 
 function humanSize(bytes) {

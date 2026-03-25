@@ -116,13 +116,10 @@ router.get("/:uuid", async (req, res) => {
   );
   if (passwordError) return res.status(401).json(passwordError);
   if (share.filePaths.length > 1) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "This share contains multiple files. Use /zip or /file/:filename.",
-        code: "MULTI_FILE_SHARE",
-      });
+    return res.status(400).json({
+      error: "This share contains multiple files. Use /zip or /file/:filename.",
+      code: "MULTI_FILE_SHARE",
+    });
   }
   const filePath = share.filePaths[0];
   const resolvedPath = safeResolve(filePath);
@@ -194,11 +191,9 @@ router.get("/:uuid/preview/:filename", async (req, res) => {
 
   const stat = await fsp.stat(resolvedPath);
   if (stat.size > config.previewMaxBytes) {
-    return res
-      .status(413)
-      .json({
-        error: `File too large to preview (limit: ${humanSize(config.previewMaxBytes)}).`,
-      });
+    return res.status(413).json({
+      error: `File too large to preview (limit: ${humanSize(config.previewMaxBytes)}).`,
+    });
   }
 
   const realName = basename(resolvedPath);
@@ -233,11 +228,9 @@ router.post("/:uuid/zip", async (req, res) => {
       return filenames.includes(real) || filenames.includes(masked);
     });
     if (targetPaths.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: "None of the requested filenames exist in this share.",
-        });
+      return res.status(400).json({
+        error: "None of the requested filenames exist in this share.",
+      });
     }
   }
 
@@ -380,7 +373,8 @@ function serveFile(res, resolvedPath, displayName) {
   const accelPath =
     "/internal-files/" + relative(config.filesRoot, resolvedPath);
   res.set({ "X-Accel-Redirect": accelPath });
-  res.status(200).send();
+  res.removeHeader("Content-Length");
+  res.status(200).end();
 }
 
 function buildZip(resolvedPaths, tempPath, share) {

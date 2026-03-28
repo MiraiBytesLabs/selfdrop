@@ -15,6 +15,7 @@ import * as sharesDb from "../db/shares.js";
 import db from "../db/index.js";
 import { resolveSafePath } from "../middleware/pathGuard.js";
 import config from "../config.js";
+import crypto from "crypto";
 
 const router = Router();
 
@@ -54,55 +55,12 @@ router.get("/:uuid/info", async (req, res) => {
   const validation = sharesDb.validateShare(req.params.uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
-  const files = [];
-  let totalSize = 0;
 
-  for (const filePath of share.filePaths) {
-    let resolvedPath;
-    try {
-      resolvedPath = resolveSafePath(filePath);
-    } catch {
-      return res.status(404).json({ error: "Not found." });
-    }
-    let stat;
-    try {
-      stat = await fsp.stat(resolvedPath);
-    } catch {
-      return res.status(404).json({ error: "Not found." });
-    }
-    const filename = basename(resolvedPath);
-    totalSize += stat.size;
-    const displayName = share.maskFilenames
-      ? maskedFilename(share.uuid, filename, files.length)
-      : filename;
-    files.push({
-      filename: displayName,
-      path: filePath,
-      size: stat.size,
-      sizeHuman: humanSize(stat.size),
-      mimeType: getMimeType(filename),
-    });
+  if (share.hasPassword) {
+    return res.json({ hasPassword: true });
+  } else {
+    return getShareInfo(share, res);
   }
-
-  const isSingle = files.length === 1;
-  const shareTitle =
-    share.name || (isSingle ? files[0].filename : `${files.length} files`);
-
-  res.json({
-    shareTitle,
-    shareName: share.name,
-    maskFilenames: share.maskFilenames,
-    fileCount: files.length,
-    totalSize,
-    totalSizeHuman: humanSize(totalSize),
-    expiresAt: share.expires_at,
-    hasPassword: share.hasPassword,
-    downloadLimit: share.download_limit,
-    downloadCount: share.download_count,
-    zipAvailable: totalSize <= config.zipMaxBytes,
-    zipMaxBytes: config.zipMaxBytes,
-    files,
-  });
 });
 
 router.get("/:uuid", async (req, res) => {
@@ -138,11 +96,6 @@ router.get("/:uuid/file/:filename", async (req, res) => {
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
-  const passwordError = await checkPassword(
-    share,
-    req.headers["x-share-password"],
-  );
-  if (passwordError) return res.status(401).json(passwordError);
 
   let matchedPath = share.filePaths.find((fp) => basename(fp) === filename);
   if (!matchedPath && share.maskFilenames) {
@@ -152,6 +105,16 @@ router.get("/:uuid/file/:filename", async (req, res) => {
   }
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });
+
+  if (share.hasPassword) {
+    const { expires, signature } = req.query;
+
+    const isValid = verifySignedUrl(matchedPath, expires, signature);
+
+    if (!isValid) {
+      return res.status(401).json({ error: "Request has expired." });
+    }
+  }
 
   const resolvedPath = safeResolve(matchedPath);
   if (!resolvedPath || !(await isAccessible(resolvedPath)))
@@ -162,6 +125,7 @@ router.get("/:uuid/file/:filename", async (req, res) => {
   const displayName = share.maskFilenames
     ? maskedFilename(share.uuid, basename(matchedPath), fileIndex)
     : null;
+
   return serveFile(res, resolvedPath, displayName);
 });
 
@@ -170,11 +134,6 @@ router.get("/:uuid/preview/:filename", async (req, res) => {
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
-  const passwordError = await checkPassword(
-    share,
-    req.headers["x-share-password"],
-  );
-  if (passwordError) return res.status(401).json(passwordError);
 
   let matchedPath = share.filePaths.find((fp) => basename(fp) === filename);
   if (!matchedPath && share.maskFilenames) {
@@ -184,6 +143,20 @@ router.get("/:uuid/preview/:filename", async (req, res) => {
   }
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });
+
+  if (share.hasPassword) {
+    const { expires, signature } = req.query;
+
+    if (!expires || !signature) {
+      return res.status(401).json({ error: "Invalid request." });
+    }
+
+    const isValid = verifySignedUrl(matchedPath, expires, signature);
+
+    if (!isValid) {
+      return res.status(401).json({ error: "Request has expired." });
+    }
+  }
 
   const resolvedPath = safeResolve(matchedPath);
   if (!resolvedPath || !(await isAccessible(resolvedPath)))
@@ -210,11 +183,6 @@ router.post("/:uuid/zip", async (req, res) => {
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
-  const passwordError = await checkPassword(
-    share,
-    req.headers["x-share-password"],
-  );
-  if (passwordError) return res.status(401).json(passwordError);
 
   const { filenames } = req.body || {};
   let targetPaths = share.filePaths;
@@ -231,6 +199,20 @@ router.post("/:uuid/zip", async (req, res) => {
       return res.status(400).json({
         error: "None of the requested filenames exist in this share.",
       });
+    }
+  }
+
+  if (share.hasPassword) {
+    const { expires, signature } = req.query;
+
+    if (!expires || !signature) {
+      return res.status(401).json({ error: "Invalid request." });
+    }
+
+    const isValid = verifySignedUrl(uuid, expires, signature);
+
+    if (!isValid) {
+      return res.status(401).json({ error: "Request has expired." });
     }
   }
 
@@ -315,7 +297,8 @@ router.post("/:uuid/verify-password", async (req, res) => {
   if (!(await verifySharePassword(share.uuid, password))) {
     return res.status(401).json({ valid: false, error: "Incorrect password." });
   }
-  res.json({ valid: true });
+
+  return getShareInfo(share, res);
 });
 
 // ── Helpers ───────────────────────────────────────────────
@@ -457,6 +440,106 @@ function humanSize(bytes) {
     unit++;
   }
   return `${value % 1 === 0 ? value : value.toFixed(1)} ${units[unit]}`;
+}
+
+function generateSignedUrl(uuid, filePath, expiresInSeconds, isZip = false) {
+  const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+
+  const data = isZip ? `${uuid}:${expires}` : `${filePath}:${expires}`;
+  const signature = crypto
+    .createHmac("sha256", config.sessionSecret)
+    .update(data)
+    .digest("hex");
+
+  const signedUrl = isZip
+    ? `/s/${uuid}/zip?expires=${expires}&signature=${signature}`
+    : `/s/${uuid}/file${filePath}?expires=${expires}&signature=${signature}`;
+
+  return signedUrl;
+}
+
+function verifySignedUrl(uuidOrFilePath, expires, signature) {
+  const now = Math.floor(Date.now() / 1000);
+
+  if (now > expires) return false;
+
+  const data = `${uuidOrFilePath}:${expires}`;
+  const expectedSignature = crypto
+    .createHmac("sha256", config.sessionSecret)
+    .update(data)
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature),
+  );
+}
+
+async function getShareInfo(share, res) {
+  const files = [];
+  let totalSize = 0;
+
+  for (const filePath of share.filePaths) {
+    let resolvedPath;
+    try {
+      resolvedPath = resolveSafePath(filePath);
+    } catch {
+      return res.status(404).json({ error: "Not found." });
+    }
+    let stat;
+    try {
+      stat = await fsp.stat(resolvedPath);
+    } catch {
+      return res.status(404).json({ error: "Not found." });
+    }
+    const filename = basename(resolvedPath);
+    totalSize += stat.size;
+    const displayName = share.maskFilenames
+      ? maskedFilename(share.uuid, filename, files.length)
+      : filename;
+
+    const fileDetails = {
+      filename: displayName,
+      path: filePath,
+      size: stat.size,
+      sizeHuman: humanSize(stat.size),
+      mimeType: getMimeType(filename),
+    };
+
+    if (share.hasPassword) {
+      const signedUrl = generateSignedUrl(share.uuid, filePath, 300);
+      fileDetails.signedUrl = signedUrl;
+    }
+
+    files.push(fileDetails);
+  }
+
+  const isSingle = files.length === 1;
+  const shareTitle =
+    share.name || (isSingle ? files[0].filename : `${files.length} files`);
+
+  const shareDetais = {
+    shareTitle,
+    shareName: share.name,
+    maskFilenames: share.maskFilenames,
+    fileCount: files.length,
+    totalSize,
+    totalSizeHuman: humanSize(totalSize),
+    expiresAt: share.expires_at,
+    hasPassword: share.hasPassword,
+    downloadLimit: share.download_limit,
+    downloadCount: share.download_count,
+    zipAvailable: totalSize <= config.zipMaxBytes,
+    zipMaxBytes: config.zipMaxBytes,
+    files,
+  };
+
+  if (share.hasPassword) {
+    const signedUrl = generateSignedUrl(share.uuid, "", 300, true);
+    shareDetais.signedUrl = signedUrl;
+  }
+
+  return res.json(shareDetais);
 }
 
 export default router;

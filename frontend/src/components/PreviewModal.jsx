@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import FileTypeIcon, { getFileCategory } from "./FileTypeIcon.jsx";
+import { getUrl } from "../utils/downloadUtils.js";
 
 const PREVIEW_SIZE_LIMIT = 200 * 1024 * 1024; // 200MB — matches PREVIEW_MAX_BYTES default in backend
 
@@ -7,7 +8,7 @@ export default function PreviewModal({
   files,
   initialIndex,
   uuid,
-  password,
+  hasPassword,
   onClose,
 }) {
   const [index, setIndex] = useState(initialIndex ?? 0);
@@ -63,12 +64,9 @@ export default function PreviewModal({
     let cancelled = false;
     setLoading(true);
 
-    const headers = {};
-    if (password) headers["X-Share-Password"] = password;
+    let url = getUrl(file, hasPassword, true);
 
-    fetch(`/s/${uuid}/preview/${encodeURIComponent(file.filename)}`, {
-      headers,
-    })
+    fetch(url)
       .then(async (res) => {
         if (!res.ok) throw new Error(`Preview failed (${res.status}).`);
         return res.blob();
@@ -90,7 +88,7 @@ export default function PreviewModal({
     return () => {
       cancelled = true;
     };
-  }, [index, uuid, password, canPreview, tooBig]);
+  }, [index, uuid, hasPassword, canPreview, tooBig]);
 
   // Revoke on unmount
   useEffect(
@@ -117,17 +115,14 @@ export default function PreviewModal({
 
   // ── Download helper ─────────────────────────────────────
   function downloadFile() {
-    const headers = password ? { "X-Share-Password": password } : {};
-    fetch(`/s/${uuid}/preview/${encodeURIComponent(file.filename)}`, {
-      headers,
-    })
-      .then((res) => res.blob())
-      .then((blob) => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = file.filename;
-        a.click();
-      });
+    const link = document.createElement("a");
+    link.href = getUrl(file, hasPassword);
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
   }
 
   return (

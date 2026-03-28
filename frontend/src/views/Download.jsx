@@ -3,6 +3,7 @@ import Logo from "../components/Logo.jsx";
 import FileTypeIcon from "../components/FileTypeIcon.jsx";
 import PreviewModal from "../components/PreviewModal.jsx";
 import { formatExpiry, isExpiringSoon } from "../utils/formatDate.js";
+import { getUrl } from "../utils/downloadUtils.js";
 
 export default function Download({ uuid }) {
   const [state, setState] = useState("loading");
@@ -23,7 +24,7 @@ export default function Download({ uuid }) {
 
   useEffect(() => {
     loadShareInfo();
-  }, [uuid]);
+  }, []);
 
   // Select all by default once loaded
   useEffect(() => {
@@ -63,6 +64,9 @@ export default function Download({ uuid }) {
       setPassword("");
       return;
     }
+
+    const data = await res.json();
+    setShareInfo(data);
     setState("ready");
   }
 
@@ -82,15 +86,16 @@ export default function Download({ uuid }) {
   }
 
   function downloadFile(file) {
-    const headers = password ? { "X-Share-Password": password } : {};
-    fetch(`/s/${uuid}/file/${encodeURIComponent(file.filename)}`, { headers })
-      .then((res) => res.blob())
-      .then((blob) => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = file.filename;
-        a.click();
-      });
+    const url = getUrl(file, shareInfo.hasPassword);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
   }
 
   async function downloadZip() {
@@ -99,9 +104,11 @@ export default function Download({ uuid }) {
     setZipping(true);
     const headers = {
       "Content-Type": "application/json",
-      ...(password ? { "X-Share-Password": password } : {}),
     };
-    const res = await fetch(`/s/${uuid}/zip`, {
+
+    const url = password ? shareInfo.signedUrl : `/s/${uuid}/zip`;
+
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify({ filenames: Array.from(selected) }),
@@ -544,7 +551,7 @@ export default function Download({ uuid }) {
           files={files}
           initialIndex={previewIndex}
           uuid={uuid}
-          password={password || null}
+          hasPassword={password ? true : false}
           onClose={() => setPreviewIndex(null)}
         />
       )}

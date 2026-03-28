@@ -109,6 +109,10 @@ router.get("/:uuid/file/:filename", async (req, res) => {
   if (share.hasPassword) {
     const { expires, signature } = req.query;
 
+    if (!expires || !signature) {
+      return res.status(401).json({ error: "Invalid request." });
+    }
+
     const isValid = verifySignedUrl(matchedPath, expires, signature);
 
     if (!isValid) {

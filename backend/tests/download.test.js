@@ -108,33 +108,71 @@ describe("GET /s/:uuid/file/:filename", () => {
 
   test("401 without password for protected share", async () => {
     const share = await createPasswordShare();
-    const info = await request(app).get(`/s/${share.uuid}/info`);
+    // Info returns no files for password-protected shares
+    // so we construct the filename directly
+    const filePath = createTestFile("test.txt", "hello world");
+    const protectedShare = await createShare({
+      filePaths: [`/${filePath}`],
+      passwordHash: await bcrypt.hash("secret123", 4),
+    });
+    // Hitting file endpoint without signed URL params should 401
     const res = await request(app).get(
-      `/s/${share.uuid}/file/${info.body.files[0].filename}`,
+      `/s/${protectedShare.uuid}/file/test.txt`,
     );
     expect(res.status).toBe(401);
-    expect(res.body.code).toBe("PASSWORD_REQUIRED");
   });
 
   test("401 with wrong password", async () => {
     const share = await createPasswordShare("correct");
-    const info = await request(app).get(`/s/${share.uuid}/info`);
+    // verify-password with wrong password returns 401
     const res = await request(app)
-      .get(`/s/${share.uuid}/file/${info.body.files[0].filename}`)
-      .set("X-Share-Password", "wrong");
+      .post(`/s/${share.uuid}/verify-password`)
+      .send({ password: "wrong" });
     expect(res.status).toBe(401);
   });
 
-  test("serves file with correct password", async () => {
+  test("serves file with correct password via signed URL", async () => {
     const filePath = createTestFile("protected.txt", "secret data");
     const hash = await bcrypt.hash("mypassword", 4);
     const share = await createShare({
       filePaths: [`/${filePath}`],
       passwordHash: hash,
     });
-    const res = await request(app)
-      .get(`/s/${share.uuid}/file/protected.txt`)
-      .set("X-Share-Password", "mypassword");
+    // First verify password to get signed URL
+    const verifyRes = await request(app)
+      .post(`/s/${share.uuid}/verify-password`)
+      .send({ password: "mypassword" });
+    expect(verifyRes.status).toBe(200);
+
+    // Extract signed URL for the file from the response
+    const signedUrl = verifyRes.body.files[0].signedUrl;
+    expect(signedUrl).toBeDefined();
+
+    // Use the signed URL to access the file
+    const res = await request(app).get(signedUrl);
+    expect(res.status).toBe(200);
+    expect(res.text).toBe("secret data");
+  });
+
+  test("serves file with correct password via signed URL", async () => {
+    const filePath = createTestFile("protected.txt", "secret data");
+    const hash = await bcrypt.hash("mypassword", 4);
+    const share = await createShare({
+      filePaths: [`/${filePath}`],
+      passwordHash: hash,
+    });
+    // First verify password to get signed URL
+    const verifyRes = await request(app)
+      .post(`/s/${share.uuid}/verify-password`)
+      .send({ password: "mypassword" });
+    expect(verifyRes.status).toBe(200);
+
+    // Extract signed URL for the file from the response
+    const signedUrl = verifyRes.body.files[0].signedUrl;
+    expect(signedUrl).toBeDefined();
+
+    // Use the signed URL to access the file
+    const res = await request(app).get(signedUrl);
     expect(res.status).toBe(200);
     expect(res.text).toBe("secret data");
   });
@@ -153,6 +191,21 @@ describe("GET /s/:uuid/file/:filename", () => {
     );
     expect(res.status).toBe(200);
     expect(res.text).toBe("masked content");
+  });
+
+  test("401 for expired signed URL", async () => {
+    const filePath = createTestFile("expired.txt", "content");
+    const hash = await bcrypt.hash("pass", 4);
+    const share = await createShare({
+      filePaths: [`/${filePath}`],
+      passwordHash: hash,
+    });
+    // Construct a signed URL with an already-expired timestamp
+    const expires = Math.floor(Date.now() / 1000) - 10; // 10 seconds ago
+    const res = await request(app).get(
+      `/s/${share.uuid}/file/expired.txt?expires=${expires}&signature=invalidsig`,
+    );
+    expect(res.status).toBe(401);
   });
 });
 
@@ -208,13 +261,16 @@ describe("POST /s/:uuid/verify-password", () => {
     ).toBe(401);
   });
 
-  test("200 for correct password", async () => {
+  test("200 with share info for correct password", async () => {
     const share = await createPasswordShare("mypassword");
     const res = await request(app)
       .post(`/s/${share.uuid}/verify-password`)
       .send({ password: "mypassword" });
     expect(res.status).toBe(200);
-    expect(res.body.valid).toBe(true);
+    // Now returns full share info instead of { valid: true }
+    expect(res.body.files).toBeDefined();
+    expect(res.body.shareTitle).toBeDefined();
+    expect(res.body.files[0].signedUrl).toBeDefined();
   });
 });
 

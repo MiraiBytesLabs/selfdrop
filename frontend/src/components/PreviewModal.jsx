@@ -64,7 +64,7 @@ export default function PreviewModal({
     let cancelled = false;
     setLoading(true);
 
-    let url = getUrl(file, hasPassword, true);
+    let url = getUrl(file, uuid, hasPassword, true);
 
     fetch(url)
       .then(async (res) => {
@@ -116,7 +116,7 @@ export default function PreviewModal({
   // ── Download helper ─────────────────────────────────────
   function downloadFile() {
     const link = document.createElement("a");
-    link.href = getUrl(file, hasPassword);
+    link.href = getUrl(file, uuid, hasPassword);
     link.style.display = "none";
 
     document.body.appendChild(link);

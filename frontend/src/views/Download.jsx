@@ -24,12 +24,12 @@ export default function Download({ uuid }) {
 
   useEffect(() => {
     loadShareInfo();
-  }, []);
+  }, [uuid]);
 
   // Select all by default once loaded
   useEffect(() => {
     if (shareInfo?.files) {
-      setSelected(new Set(shareInfo.files.map((f) => f.filename)));
+      setSelected(new Set(shareInfo.files.map((f) => f.uuid)));
     }
   }, [shareInfo]);
 
@@ -70,23 +70,23 @@ export default function Download({ uuid }) {
     setState("ready");
   }
 
-  function toggleSelect(filename) {
+  function toggleSelect(uuid) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(filename) ? next.delete(filename) : next.add(filename);
+      next.has(uuid) ? next.delete(uuid) : next.add(uuid);
       return next;
     });
   }
 
   function selectAll() {
-    setSelected(new Set(shareInfo.files.map((f) => f.filename)));
+    setSelected(new Set(shareInfo.files.map((f) => f.uuid)));
   }
   function selectNone() {
     setSelected(new Set());
   }
 
   function downloadFile(file) {
-    const url = getUrl(file, shareInfo.hasPassword);
+    const url = getUrl(file, uuid, shareInfo.hasPassword);
 
     const link = document.createElement("a");
     link.href = url;
@@ -111,7 +111,7 @@ export default function Download({ uuid }) {
     const res = await fetch(url, {
       method: "POST",
       headers,
-      body: JSON.stringify({ filenames: Array.from(selected) }),
+      body: JSON.stringify({ uuids: Array.from(selected) }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -131,7 +131,7 @@ export default function Download({ uuid }) {
   const totalFiles = shareInfo?.files?.length ?? 0;
   const selectedSize =
     shareInfo?.files
-      ?.filter((f) => selected.has(f.filename))
+      ?.filter((f) => selected.has(f.uuid))
       .reduce((s, f) => s + f.size, 0) ?? 0;
 
   const zipDisabled = !shareInfo?.zipAvailable || selectedCount === 0;
@@ -310,11 +310,11 @@ export default function Download({ uuid }) {
         {/* File list — Fix: paddingTop/Bottom for breathing room */}
         <ul style={{ listStyle: "none", padding: 4 }}>
           {files.map((file, i) => {
-            const isSelected = selected.has(file.filename);
+            const isSelected = selected.has(file.uuid);
             return (
               <li
                 key={file.path}
-                onClick={() => toggleSelect(file.filename)}
+                onClick={() => toggleSelect(file.uuid)}
                 style={{
                   display: "flex",
                   alignItems: "center",

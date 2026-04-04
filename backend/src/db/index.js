@@ -1,14 +1,14 @@
-import Database from 'better-sqlite3';
-import { mkdirSync } from 'fs';
-import { dirname } from 'path';
-import config from '../config.js';
+import Database from "better-sqlite3";
+import { mkdirSync } from "fs";
+import { dirname } from "path";
+import config from "../config.js";
 
 mkdirSync(dirname(config.dbPath), { recursive: true });
 
 const db = new Database(config.dbPath);
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS shares (
@@ -23,6 +23,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS share_files (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid      TEXT    NOT NULL UNIQUE,
     share_id  INTEGER NOT NULL REFERENCES shares(id) ON DELETE CASCADE,
     file_path TEXT    NOT NULL
   );
@@ -46,7 +47,11 @@ const migrations = [
 ];
 
 for (const migration of migrations) {
-  try { db.exec(migration); } catch { /* already applied */ }
+  try {
+    db.exec(migration);
+  } catch {
+    /* already applied */
+  }
 }
 
 console.log(`[db] SQLite connected: ${config.dbPath}`);

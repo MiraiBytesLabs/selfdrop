@@ -91,18 +91,20 @@ router.get("/:uuid", async (req, res) => {
   return serveFile(res, resolvedPath, displayName);
 });
 
-router.get("/:uuid/file/:filename", async (req, res) => {
-  const { uuid, filename } = req.params;
+router.get("/:uuid/file/:fileUuid", async (req, res) => {
+  const { uuid, fileUuid } = req.params;
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
 
-  let matchedPath = share.filePaths.find((fp) => basename(fp) === filename);
-  if (!matchedPath && share.maskFilenames) {
-    matchedPath = share.filePaths.find(
-      (fp, i) => maskedFilename(share.uuid, basename(fp), i) === filename,
-    );
+  const file = share.files.find((file) => file.uuid === fileUuid);
+
+  if (!file) {
+    return res.status(404).json({ error: "File not found in this share." });
   }
+
+  let matchedPath = file.file_path;
+
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });
 
@@ -113,7 +115,7 @@ router.get("/:uuid/file/:filename", async (req, res) => {
       return res.status(401).json({ error: "Invalid request." });
     }
 
-    const isValid = verifySignedUrl(matchedPath, expires, signature);
+    const isValid = verifySignedUrl(fileUuid, expires, signature);
 
     if (!isValid) {
       return res.status(401).json({ error: "Request has expired." });
@@ -133,18 +135,20 @@ router.get("/:uuid/file/:filename", async (req, res) => {
   return serveFile(res, resolvedPath, displayName);
 });
 
-router.get("/:uuid/preview/:filename", async (req, res) => {
-  const { uuid, filename } = req.params;
+router.get("/:uuid/preview/:fileUuid", async (req, res) => {
+  const { uuid, fileUuid } = req.params;
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
 
-  let matchedPath = share.filePaths.find((fp) => basename(fp) === filename);
-  if (!matchedPath && share.maskFilenames) {
-    matchedPath = share.filePaths.find(
-      (fp, i) => maskedFilename(share.uuid, basename(fp), i) === filename,
-    );
+  const file = share.files.find((file) => file.uuid === fileUuid);
+
+  if (!file) {
+    return res.status(404).json({ error: "File not found in this share." });
   }
+
+  let matchedPath = file.file_path;
+
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });
 
@@ -155,7 +159,7 @@ router.get("/:uuid/preview/:filename", async (req, res) => {
       return res.status(401).json({ error: "Invalid request." });
     }
 
-    const isValid = verifySignedUrl(matchedPath, expires, signature);
+    const isValid = verifySignedUrl(fileUuid, expires, signature);
 
     if (!isValid) {
       return res.status(401).json({ error: "Request has expired." });
@@ -188,20 +192,16 @@ router.post("/:uuid/zip", async (req, res) => {
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
 
-  const { filenames } = req.body || {};
-  let targetPaths = share.filePaths;
+  const { uuids } = req.body || {};
+  let targetFiles;
 
-  if (Array.isArray(filenames) && filenames.length > 0) {
-    targetPaths = share.filePaths.filter((fp, i) => {
-      const real = basename(fp);
-      const masked = share.maskFilenames
-        ? maskedFilename(share.uuid, real, i)
-        : real;
-      return filenames.includes(real) || filenames.includes(masked);
+  if (Array.isArray(uuids) && uuids.length > 0) {
+    targetFiles = share.files.filter((file, i) => {
+      return uuids.includes(file.uuid);
     });
-    if (targetPaths.length === 0) {
+    if (targetFiles.length === 0) {
       return res.status(400).json({
-        error: "None of the requested filenames exist in this share.",
+        error: "None of the requested files exist in this share.",
       });
     }
   }
@@ -221,8 +221,8 @@ router.post("/:uuid/zip", async (req, res) => {
   }
 
   const resolvedPaths = [];
-  for (const fp of targetPaths) {
-    const resolved = safeResolve(fp);
+  for (const files of targetFiles) {
+    const resolved = safeResolve(files.file_path);
     if (!resolved || !(await isAccessible(resolved)))
       return res.status(404).json({ error: "Not found." });
     resolvedPaths.push(resolved);
@@ -342,7 +342,6 @@ function serveFile(res, resolvedPath, displayName) {
   res.set({
     "Content-Disposition": `attachment; filename="${sanitizeFilename(serveAs)}"`,
     "Content-Type": mimeType,
-    "Accept-Ranges": "bytes",
   });
 
   if (
@@ -446,10 +445,10 @@ function humanSize(bytes) {
   return `${value % 1 === 0 ? value : value.toFixed(1)} ${units[unit]}`;
 }
 
-function generateSignedUrl(uuid, filePath, expiresInSeconds, isZip = false) {
+function generateSignedUrl(uuid, fileUuid, expiresInSeconds, isZip = false) {
   const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
 
-  const data = isZip ? `${uuid}:${expires}` : `${filePath}:${expires}`;
+  const data = isZip ? `${uuid}:${expires}` : `${fileUuid}:${expires}`;
   const signature = crypto
     .createHmac("sha256", config.sessionSecret)
     .update(data)
@@ -457,17 +456,17 @@ function generateSignedUrl(uuid, filePath, expiresInSeconds, isZip = false) {
 
   const signedUrl = isZip
     ? `/s/${uuid}/zip?expires=${expires}&signature=${signature}`
-    : `/s/${uuid}/file${filePath}?expires=${expires}&signature=${signature}`;
+    : `/s/${uuid}/file/${fileUuid}?expires=${expires}&signature=${signature}`;
 
   return signedUrl;
 }
 
-function verifySignedUrl(uuidOrFilePath, expires, signature) {
+function verifySignedUrl(uuid, expires, signature) {
   const now = Math.floor(Date.now() / 1000);
 
   if (now > expires) return false;
 
-  const data = `${uuidOrFilePath}:${expires}`;
+  const data = `${uuid}:${expires}`;
   const expectedSignature = crypto
     .createHmac("sha256", config.sessionSecret)
     .update(data)
@@ -483,10 +482,10 @@ async function getShareInfo(share, res) {
   const files = [];
   let totalSize = 0;
 
-  for (const filePath of share.filePaths) {
+  for (const { file_path, uuid } of share.files) {
     let resolvedPath;
     try {
-      resolvedPath = resolveSafePath(filePath);
+      resolvedPath = resolveSafePath(file_path);
     } catch {
       return res.status(404).json({ error: "Not found." });
     }
@@ -504,14 +503,16 @@ async function getShareInfo(share, res) {
 
     const fileDetails = {
       filename: displayName,
-      path: filePath,
+      // path: file_path,
+      uuid: uuid,
       size: stat.size,
       sizeHuman: humanSize(stat.size),
       mimeType: getMimeType(filename),
     };
 
     if (share.hasPassword) {
-      const signedUrl = generateSignedUrl(share.uuid, filePath, 300);
+      // signedUrl for downloading invidiual file.
+      const signedUrl = generateSignedUrl(share.uuid, uuid, 300);
       fileDetails.signedUrl = signedUrl;
     }
 
@@ -539,6 +540,7 @@ async function getShareInfo(share, res) {
   };
 
   if (share.hasPassword) {
+    // signedUrl for downloading the entire share through zip.
     const signedUrl = generateSignedUrl(share.uuid, "", 300, true);
     shareDetais.signedUrl = signedUrl;
   }

@@ -38,6 +38,12 @@ async function createPasswordShare(password = "secret123") {
   return createShare({ passwordHash: await bcrypt.hash(password, 4) });
 }
 
+async function getShareInfo(uuid) {
+  const res = await request(app).get(`/s/${uuid}/info`);
+  expect(res.status).toBe(200);
+  return res.body;
+}
+
 describe("GET /s/:uuid/info", () => {
   test("404 for unknown UUID", async () => {
     const res = await request(app).get(
@@ -80,44 +86,52 @@ describe("GET /s/:uuid/info", () => {
   });
 });
 
-describe("GET /s/:uuid/file/:filename", () => {
+describe("GET /s/:uuid/file/:fileUuid", () => {
   test("404 for unknown share", async () => {
     expect(
       (
         await request(app).get(
-          "/s/00000000-0000-0000-0000-000000000000/file/test.txt",
+          "/s/00000000-0000-0000-0000-000000000000/file/00000000-0000-0000-0000-000000000000",
         )
       ).status,
     ).toBe(404);
   });
 
-  test("404 for wrong filename", async () => {
+  test("404 for wrong file UUID", async () => {
     const share = await createShare();
     expect(
-      (await request(app).get(`/s/${share.uuid}/file/wrong.txt`)).status,
+      (
+        await request(app).get(
+          `/s/${share.uuid}/file/00000000-0000-0000-0000-000000000000`,
+        )
+      ).status,
     ).toBe(404);
   });
 
   test("serves file content", async () => {
     const filePath = createTestFile("dl-me.txt", "file contents here");
     const share = await createShare({ filePaths: [`/${filePath}`] });
-    const res = await request(app).get(`/s/${share.uuid}/file/dl-me.txt`);
+    const info = await getShareInfo(share.uuid);
+    const fileUuid = info.files[0].uuid;
+    const res = await request(app).get(`/s/${share.uuid}/file/${fileUuid}`);
     expect(res.status).toBe(200);
     expect(res.text).toBe("file contents here");
   });
 
   test("401 without password for protected share", async () => {
-    const share = await createPasswordShare();
-    // Info returns no files for password-protected shares
-    // so we construct the filename directly
     const filePath = createTestFile("test.txt", "hello world");
     const protectedShare = await createShare({
       filePaths: [`/${filePath}`],
       passwordHash: await bcrypt.hash("secret123", 4),
     });
-    // Hitting file endpoint without signed URL params should 401
+    const verifyRes = await request(app)
+      .post(`/s/${protectedShare.uuid}/verify-password`)
+      .send({ password: "secret123" });
+    expect(verifyRes.status).toBe(200);
+    const fileUuid = verifyRes.body.files[0].uuid;
+
     const res = await request(app).get(
-      `/s/${protectedShare.uuid}/file/test.txt`,
+      `/s/${protectedShare.uuid}/file/${fileUuid}`,
     );
     expect(res.status).toBe(401);
   });
@@ -154,40 +168,18 @@ describe("GET /s/:uuid/file/:filename", () => {
     expect(res.text).toBe("secret data");
   });
 
-  test("serves file with correct password via signed URL", async () => {
-    const filePath = createTestFile("protected.txt", "secret data");
-    const hash = await bcrypt.hash("mypassword", 4);
-    const share = await createShare({
-      filePaths: [`/${filePath}`],
-      passwordHash: hash,
-    });
-    // First verify password to get signed URL
-    const verifyRes = await request(app)
-      .post(`/s/${share.uuid}/verify-password`)
-      .send({ password: "mypassword" });
-    expect(verifyRes.status).toBe(200);
-
-    // Extract signed URL for the file from the response
-    const signedUrl = verifyRes.body.files[0].signedUrl;
-    expect(signedUrl).toBeDefined();
-
-    // Use the signed URL to access the file
-    const res = await request(app).get(signedUrl);
-    expect(res.status).toBe(200);
-    expect(res.text).toBe("secret data");
-  });
-
   test("accepts masked filename", async () => {
     const filePath = createTestFile("real-name.txt", "masked content");
     const share = await createShare({
       filePaths: [`/${filePath}`],
       maskFilenames: true,
     });
-    const info = await request(app).get(`/s/${share.uuid}/info`);
-    const masked = info.body.files[0].filename;
+    const info = await getShareInfo(share.uuid);
+    const masked = info.files[0].filename;
     expect(masked).toMatch(/^sdrop-/);
+    const fileUuid = info.files[0].uuid;
     const res = await request(app).get(
-      `/s/${share.uuid}/file/${encodeURIComponent(masked)}`,
+      `/s/${share.uuid}/file/${fileUuid}`,
     );
     expect(res.status).toBe(200);
     expect(res.text).toBe("masked content");
@@ -200,10 +192,16 @@ describe("GET /s/:uuid/file/:filename", () => {
       filePaths: [`/${filePath}`],
       passwordHash: hash,
     });
-    // Construct a signed URL with an already-expired timestamp
+
+    const verifyRes = await request(app)
+      .post(`/s/${share.uuid}/verify-password`)
+      .send({ password: "pass" });
+    expect(verifyRes.status).toBe(200);
+    const fileUuid = verifyRes.body.files[0].uuid;
+
     const expires = Math.floor(Date.now() / 1000) - 10; // 10 seconds ago
     const res = await request(app).get(
-      `/s/${share.uuid}/file/expired.txt?expires=${expires}&signature=invalidsig`,
+      `/s/${share.uuid}/file/${fileUuid}?expires=${expires}&signature=invalidsig`,
     );
     expect(res.status).toBe(401);
   });
@@ -287,11 +285,12 @@ describe("POST /s/:uuid/zip", () => {
 
   test("400 for nonexistent filenames", async () => {
     const share = await createShare();
+    const missingUuid = "00000000-0000-0000-0000-000000000000";
     expect(
       (
         await request(app)
           .post(`/s/${share.uuid}/zip`)
-          .send({ filenames: ["nonexistent.txt"] })
+          .send({ uuids: [missingUuid] })
       ).status,
     ).toBe(400);
   });
@@ -310,9 +309,10 @@ describe("POST /s/:uuid/zip", () => {
       filePaths: [`/${f1}`, `/${f2}`],
       name: "zip test",
     });
+    const info = await getShareInfo(share.uuid);
     const res = await request(app)
       .post(`/s/${share.uuid}/zip`)
-      .send({ filenames: ["zip-a.txt", "zip-b.txt"] });
+      .send({ uuids: info.files.map((file) => file.uuid) });
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toMatch(/zip/);
   }, 30000);

@@ -97,9 +97,13 @@ router.get("/:uuid/file/:fileUuid", async (req, res) => {
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
 
-  let matchedPath = share.files.find(
-    (file) => file.uuid === fileUuid,
-  ).file_path;
+  const file = share.files.find((file) => file.uuid === fileUuid);
+
+  if (!file) {
+    return res.status(404).json({ error: "File not found in this share." });
+  }
+
+  let matchedPath = file.file_path;
 
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });
@@ -137,9 +141,13 @@ router.get("/:uuid/preview/:fileUuid", async (req, res) => {
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
 
-  let matchedPath = share.files.find(
-    (file) => file.uuid === fileUuid,
-  ).file_path;
+  const file = share.files.find((file) => file.uuid === fileUuid);
+
+  if (!file) {
+    return res.status(404).json({ error: "File not found in this share." });
+  }
+
+  let matchedPath = file.file_path;
 
   if (!matchedPath)
     return res.status(404).json({ error: "File not found in this share." });

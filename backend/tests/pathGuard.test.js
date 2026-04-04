@@ -1,11 +1,18 @@
 import { describe, test, expect, afterAll, beforeAll } from "vitest";
-import { setupTestEnv, cleanupTestEnv } from "./helpers.js";
+import { setupTestEnv, cleanupTestEnv, createTestFile } from "./helpers.js";
 
 setupTestEnv();
 
 // Must import AFTER setupTestEnv sets env vars
 const { resolveSafePath } = await import("../src/middleware/pathGuard.js");
 const { default: config } = await import("../src/config.js");
+
+beforeAll(() => {
+  createTestFile("file.txt", "hello");
+  createTestFile("track.mp3", "audio", "music/album");
+  createTestFile("track.mp3", "audio", "music");
+  createTestFile("passwd", "not-really", "etc");
+});
 
 afterAll(cleanupTestEnv);
 
@@ -37,14 +44,15 @@ describe("resolveSafePath", () => {
     });
   });
 
-  describe("path traversal — rejects and throws", () => {
+  describe("path traversal rejects and throws", () => {
     test("rejects traversal that escapes root", () => {
-      expect(() => resolveSafePath("../../outside")).toThrow();
+      expect(() => resolveSafePath("../../outside")).toThrow("Invalid path.");
     });
 
-    test("path.join behaviour: /etc/passwd treated as relative, stays inside root", () => {
+    test("treats /etc/passwd as relative to files root", async () => {
+      const { join } = await import("path");
       const result = resolveSafePath("/etc/passwd");
-      expect(result).toContain(config.filesRoot);
+      expect(result).toBe(join(config.filesRoot, "etc", "passwd"));
     });
 
     test("rejects path resolving to parent via deep traversal", () => {
@@ -53,12 +61,12 @@ describe("resolveSafePath", () => {
       ).toThrow();
     });
 
-    test("thrown error has status 403", () => {
+    test("missing traversal targets return status 400", () => {
       expect(() => resolveSafePath("../../outside")).toThrowError();
       try {
         resolveSafePath("../../outside");
       } catch (err) {
-        expect(err.status).toBe(403);
+        expect(err.status).toBe(400);
       }
     });
 
@@ -71,18 +79,25 @@ describe("resolveSafePath", () => {
     test("rejects null", () => {
       expect(() => resolveSafePath(null)).toThrow();
     });
+
     test("rejects undefined", () => {
       expect(() => resolveSafePath(undefined)).toThrow();
     });
+
     test("rejects number", () => {
       expect(() => resolveSafePath(42)).toThrow();
     });
+
     test("thrown error has status 400 for non-string", () => {
       try {
         resolveSafePath(null);
       } catch (err) {
         expect(err.status).toBe(400);
       }
+    });
+
+    test("rejects null bytes", () => {
+      expect(() => resolveSafePath("/file.txt\0evil")).toThrow("Invalid path.");
     });
   });
 });

@@ -27,16 +27,18 @@ function makeShare(overrides = {}) {
 }
 
 describe("createShare", () => {
-  test("creates and returns share with filePaths", () => {
+  test("creates and returns basic share details", () => {
     const share = makeShare();
     expect(share.uuid).toBeDefined();
-    expect(share.filePaths).toEqual(["/test-file.txt"]);
+    expect(share.filePaths).toBeUndefined();
+    expect(share.hasPassword).toBe(false);
   });
 
-  test("creates multi-file share", () => {
-    expect(
-      makeShare({ filePaths: ["/a.txt", "/b.txt"] }).filePaths,
-    ).toHaveLength(2);
+  test("persists filePaths for lookup by UUID", () => {
+    const share = makeShare({ filePaths: ["/a.txt", "/b.txt"] });
+    const stored = sharesDb.getShareByUuid(share.uuid);
+    expect(stored.filePaths).toEqual(["/a.txt", "/b.txt"]);
+    expect(stored.files).toHaveLength(2);
   });
 
   test("hasPassword is false when no hash", () => {
@@ -62,9 +64,20 @@ describe("createShare", () => {
     expect(makeShare().download_count).toBe(0);
   });
 
-  test("filePaths returned in insertion order", () => {
+  test("filePaths are returned in insertion order when fetched", () => {
     const paths = ["/c.mp3", "/a.pdf", "/b.jpg"];
-    expect(makeShare({ filePaths: paths }).filePaths).toEqual(paths);
+    const share = makeShare({ filePaths: paths });
+    expect(sharesDb.getShareByUuid(share.uuid).filePaths).toEqual(paths);
+  });
+
+  test("assigns a UUID to each stored file", () => {
+    const share = makeShare({ filePaths: ["/a.txt", "/b.txt"] });
+    const stored = sharesDb.getShareByUuid(share.uuid);
+    expect(stored.files).toHaveLength(2);
+    for (const file of stored.files) {
+      expect(file.file_path).toBeDefined();
+      expect(file.uuid).toBeDefined();
+    }
   });
 });
 

@@ -6,13 +6,29 @@ import { dirname } from "path";
 
 loadEnv();
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+export interface IConfig {
+  port: number;
+  filesRoot: string;
+  dbPath: string;
+  sessionSecret: string;
+  sessionMode: string;
+  sendfileMode: string;
+  zipMaxBytes: number;
+  zipCompressionLevel: number;
+  zipTempDir: string;
+  zipMinTtlSeconds: number;
+  zipTtlSpeedBytesPs: number;
+  previewMaxBytes: number;
+  zipTtlForSize(sizeBytes: number): number;
+}
 
-const FILES_ROOT = resolve(
+const __dirname: string = dirname(fileURLToPath(import.meta.url));
+
+const FILES_ROOT: string = resolve(
   process.env.FILES_ROOT || join(__dirname, "..", "data", "files"),
 );
 
-const config = {
+const config: IConfig = {
   port: parseInt(process.env.PORT || "3000", 10),
   filesRoot: FILES_ROOT,
   dbPath: resolve(
@@ -37,7 +53,7 @@ const config = {
     process.env.PREVIEW_MAX_BYTES || String(200 * 1024 * 1024),
   ),
 
-  zipTtlForSize(sizeBytes) {
+  zipTtlForSize(sizeBytes: number) {
     const theoretical = sizeBytes / this.zipTtlSpeedBytesPs;
     return Math.ceil(Math.max(this.zipMinTtlSeconds, theoretical * 2));
   },

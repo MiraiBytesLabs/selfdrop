@@ -1,12 +1,13 @@
-import express from 'express';
-import { fileURLToPath } from 'url';
-import config from './config.js';
-import fsRouter       from './routes/fs.js';
-import sharesRouter   from './routes/shares.js';
-import authRouter     from './routes/auth.js';
-import downloadRouter from './routes/download.js';
-import settingsRouter from './routes/settings.js';
-import requireAuth    from './middleware/requireAuth.js';
+import express from "express";
+import { fileURLToPath } from "url";
+import config from "./config.js";
+import fsRouter from "./routes/fs.js";
+import sharesRouter from "./routes/shares.js";
+import authRouter from "./routes/auth.js";
+import downloadRouter from "./routes/download.js";
+import settingsRouter from "./routes/settings.js";
+import requireAuth from "./middleware/requireAuth.js";
+import type { ErrorRequestHandler } from "express";
 
 const app = express();
 
@@ -19,24 +20,33 @@ app.use((req, _res, next) => {
 });
 
 // ── Routes ────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', version: process.env.npm_package_version || '1.0.0' }));
+app.get("/health", (_req, res) =>
+  res.json({
+    status: "ok",
+    version: process.env.npm_package_version || "1.0.0",
+  }),
+);
 
-app.use('/api/auth',     authRouter);
-app.use('/api/fs',       requireAuth, fsRouter);
-app.use('/api/shares',   requireAuth, sharesRouter);
-app.use('/s',            downloadRouter);
-app.use('/api/settings', settingsRouter);
-app.use('/api/admin',    settingsRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/fs", requireAuth, fsRouter);
+app.use("/api/shares", requireAuth, sharesRouter);
+app.use("/s", downloadRouter);
+app.use("/api/settings", settingsRouter);
+app.use("/api/admin", settingsRouter);
 
 // ── 404 ───────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ error: 'Not found.' }));
+app.use((_req, res) => res.status(404).json({ error: "Not found." }));
 
 // ── Global error handler ──────────────────────────────────
-// Express 5 passes async errors automatically — no need for next(err) wrappers
-app.use((err, _req, res, _next) => {
-  console.error('[unhandled]', err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error.' });
-});
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  console.error("[unhandled]", err);
+
+  res.status((err as any).status || 500).json({
+    error: err instanceof Error ? err.message : "Internal server error.",
+  });
+};
+
+app.use(errorHandler);
 
 // ── Start — only when run directly, not when imported by tests ──────────
 // ESM equivalent of `if (require.main === module)`

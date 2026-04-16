@@ -11,7 +11,7 @@ import {
 
 setupTestEnv();
 
-// Force fresh module registry so config.js re-reads env vars set above
+// Force fresh module registry so config.ts re-reads env vars set above
 vi.resetModules();
 
 const app = (await import("../src/app.js")).default;

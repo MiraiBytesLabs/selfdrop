@@ -17,6 +17,61 @@ import { resolveSafePath } from "../middleware/pathGuard.js";
 import config from "../config.js";
 import crypto from "crypto";
 
+import type { Response } from "express";
+
+export interface IFileTypes {
+  [key: string]: string;
+  ".pdf": string;
+  ".zip": string;
+  ".tar": string;
+  ".gz": string;
+  ".mp4": string;
+  ".mkv": string;
+  ".mp3": string;
+  ".aac": string;
+  ".wav": string;
+  ".flac": string;
+  ".m4a": string;
+  ".png": string;
+  ".jpg": string;
+  ".jpeg": string;
+  ".gif": string;
+  ".webp": string;
+  ".txt": string;
+  ".md": string;
+  ".json": string;
+  ".csv": string;
+  ".docx": string;
+  ".xlsx": string;
+  ".pptx": string;
+}
+
+export interface IFileDetails {
+  filename: string;
+  uuid: string;
+  size: number;
+  sizeHuman: string;
+  mimeType: string;
+  signedUrl?: string;
+}
+
+export interface IShareDetails {
+  shareTitle: string;
+  shareName: string | null;
+  maskFilenames: boolean;
+  fileCount: number;
+  totalSize: number;
+  totalSizeHuman: string;
+  expiresAt: string;
+  hasPassword: boolean;
+  downloadLimit: number | null;
+  downloadCount: number;
+  zipAvailable: boolean;
+  zipMaxBytes: number;
+  files: IFileDetails[];
+  signedUrl?: string;
+}
+
 const router = Router();
 
 // ── Startup ───────────────────────────────────────────────
@@ -33,7 +88,10 @@ setInterval(
       for (const file of readdirSync(config.zipTempDir)) {
         const match = file.match(/^selfdrop-.+-(\d+)\.zip$/);
         if (!match) continue;
-        if (now >= parseInt(match[1], 10)) {
+        const expiry = match[1];
+        if (!expiry) continue;
+
+        if (now >= parseInt(expiry, 10)) {
           try {
             unlinkSync(join(config.zipTempDir, file));
             cleaned++;
@@ -42,8 +100,12 @@ setInterval(
       }
       if (cleaned > 0)
         console.log(`[zip-cleanup] removed ${cleaned} temp file(s)`);
-    } catch (err) {
-      console.error("[zip-cleanup] error:", err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("[zip-cleanup] error:", err.message);
+      } else {
+        console.error("[zip-cleanup] error:", "Unknown Error Occurred.");
+      }
     }
   },
   5 * 60 * 1000,
@@ -68,26 +130,29 @@ router.get("/:uuid", async (req, res) => {
   const validation = sharesDb.validateShare(uuid);
   if (!validation.valid) return res.status(404).json({ error: "Not found." });
   const { share } = validation;
-  const passwordError = await checkPassword(
-    share,
-    req.headers["x-share-password"],
-  );
-  if (passwordError) return res.status(401).json(passwordError);
-  if (share.filePaths.length > 1) {
+
+  if (share.files.length > 1) {
     return res.status(400).json({
-      error: "This share contains multiple files. Use /zip or /file/:filename.",
+      error: "This share contains multiple files. Use /zip or /file/:fileUuid.",
       code: "MULTI_FILE_SHARE",
     });
   }
-  const filePath = share.filePaths[0];
-  const resolvedPath = safeResolve(filePath);
-  if (!resolvedPath || !(await isAccessible(resolvedPath)))
+
+  const file = share.files[0];
+  if (!file?.file_path) {
     return res.status(404).json({ error: "Not found." });
+  }
+
+  const resolvedPath = safeResolve(file.file_path);
+  if (!resolvedPath || !(await isAccessible(resolvedPath))) {
+    return res.status(404).json({ error: "Not found." });
+  }
+
   sharesDb.incrementDownloadCount(uuid);
-  const fileIndex = share.filePaths.indexOf(filePath);
   const displayName = share.maskFilenames
-    ? maskedFilename(share.uuid, basename(filePath), fileIndex)
+    ? maskedFilename(share.uuid, basename(file.file_path), 0)
     : null;
+
   return serveFile(res, resolvedPath, displayName);
 });
 
@@ -115,7 +180,11 @@ router.get("/:uuid/file/:fileUuid", async (req, res) => {
       return res.status(401).json({ error: "Invalid request." });
     }
 
-    const isValid = verifySignedUrl(fileUuid, expires, signature);
+    const isValid = verifySignedUrl(
+      fileUuid,
+      parseInt(expires as string),
+      signature as string,
+    );
 
     if (!isValid) {
       return res.status(401).json({ error: "Request has expired." });
@@ -159,7 +228,11 @@ router.get("/:uuid/preview/:fileUuid", async (req, res) => {
       return res.status(401).json({ error: "Invalid request." });
     }
 
-    const isValid = verifySignedUrl(fileUuid, expires, signature);
+    const isValid = verifySignedUrl(
+      fileUuid,
+      parseInt(expires as string),
+      signature as string,
+    );
 
     if (!isValid) {
       return res.status(401).json({ error: "Request has expired." });
@@ -193,7 +266,7 @@ router.post("/:uuid/zip", async (req, res) => {
   const { share } = validation;
 
   const { uuids } = req.body || {};
-  let targetFiles;
+  let targetFiles: sharesDb.IFileDTO[] = [];
 
   if (Array.isArray(uuids) && uuids.length > 0) {
     targetFiles = share.files.filter((file, i) => {
@@ -213,7 +286,11 @@ router.post("/:uuid/zip", async (req, res) => {
       return res.status(401).json({ error: "Invalid request." });
     }
 
-    const isValid = verifySignedUrl(uuid, expires, signature);
+    const isValid = verifySignedUrl(
+      uuid,
+      parseInt(expires as string),
+      signature as string,
+    );
 
     if (!isValid) {
       return res.status(401).json({ error: "Request has expired." });
@@ -307,17 +384,17 @@ router.post("/:uuid/verify-password", async (req, res) => {
 
 // ── Helpers ───────────────────────────────────────────────
 
-async function checkPassword(share, providedPassword) {
-  if (!share.hasPassword) return null;
-  if (!providedPassword)
-    return { error: "Password required.", code: "PASSWORD_REQUIRED" };
-  if (!(await verifySharePassword(share.uuid, providedPassword))) {
-    return { error: "Incorrect password.", code: "PASSWORD_INCORRECT" };
-  }
-  return null;
-}
+// async function checkPassword(share, providedPassword: string) {
+//   if (!share.hasPassword) return null;
+//   if (!providedPassword)
+//     return { error: "Password required.", code: "PASSWORD_REQUIRED" };
+//   if (!(await verifySharePassword(share.uuid, providedPassword))) {
+//     return { error: "Incorrect password.", code: "PASSWORD_INCORRECT" };
+//   }
+//   return null;
+// }
 
-function safeResolve(filePath) {
+function safeResolve(filePath: string) {
   try {
     return resolveSafePath(filePath);
   } catch {
@@ -325,7 +402,7 @@ function safeResolve(filePath) {
   }
 }
 
-async function isAccessible(resolvedPath) {
+async function isAccessible(resolvedPath: string) {
   try {
     await fsp.access(resolvedPath);
     return true;
@@ -334,7 +411,11 @@ async function isAccessible(resolvedPath) {
   }
 }
 
-function serveFile(res, resolvedPath, displayName) {
+function serveFile(
+  res: Response,
+  resolvedPath: string,
+  displayName: string | null,
+) {
   const realName = basename(resolvedPath);
   const serveAs = displayName || realName;
   const mimeType = getMimeType(realName);
@@ -363,7 +444,11 @@ function serveFile(res, resolvedPath, displayName) {
   res.status(200).end();
 }
 
-function buildZip(resolvedPaths, tempPath, share) {
+function buildZip(
+  resolvedPaths: string[],
+  tempPath: string,
+  share: sharesDb.IShareDTO,
+) {
   return new Promise((resolve, reject) => {
     const output = createWriteStream(tempPath);
     const archive = archiver("zip", {
@@ -375,6 +460,9 @@ function buildZip(resolvedPaths, tempPath, share) {
     archive.pipe(output);
     for (let i = 0; i < resolvedPaths.length; i++) {
       const rp = resolvedPaths[i];
+
+      if (!rp) continue;
+
       const zipName = share.maskFilenames
         ? maskedFilename(share.uuid, basename(rp), i)
         : basename(rp);
@@ -384,22 +472,27 @@ function buildZip(resolvedPaths, tempPath, share) {
   });
 }
 
-async function verifySharePassword(uuid, plaintext) {
+async function verifySharePassword(uuid: string, plaintext: string) {
   const row = db
     .prepare("SELECT password_hash FROM shares WHERE uuid = ?")
-    .get(uuid);
+    .get(uuid) as { password_hash: string | null } | undefined;
+
   if (!row?.password_hash) return false;
   return bcrypt.compare(plaintext, row.password_hash);
 }
 
-function maskedFilename(shareUuid, realFilename, index) {
+function maskedFilename(
+  shareUuid: string,
+  realFilename: string,
+  index: number,
+) {
   const token = shareUuid.replace(/-/g, "").slice(0, 6);
   return `sdrop-${token}-${index + 1}${extname(realFilename).toLowerCase()}`;
 }
 
-function getMimeType(filename) {
+function getMimeType(filename: string): string {
   const ext = extname(filename).toLowerCase();
-  const types = {
+  const types: IFileTypes = {
     ".pdf": "application/pdf",
     ".zip": "application/zip",
     ".tar": "application/x-tar",
@@ -430,11 +523,11 @@ function getMimeType(filename) {
   return types[ext] || "application/octet-stream";
 }
 
-function sanitizeFilename(filename) {
+function sanitizeFilename(filename: string) {
   return filename.replace(/["\\\r\n]/g, "_");
 }
 
-function humanSize(bytes) {
+function humanSize(bytes: number) {
   const units = ["B", "KB", "MB", "GB", "TB"];
   let value = bytes,
     unit = 0;
@@ -445,7 +538,12 @@ function humanSize(bytes) {
   return `${value % 1 === 0 ? value : value.toFixed(1)} ${units[unit]}`;
 }
 
-function generateSignedUrl(uuid, fileUuid, expiresInSeconds, isZip = false) {
+function generateSignedUrl(
+  uuid: string,
+  fileUuid: string,
+  expiresInSeconds: number,
+  isZip: boolean = false,
+) {
   const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
 
   const data = isZip ? `${uuid}:${expires}` : `${fileUuid}:${expires}`;
@@ -461,7 +559,7 @@ function generateSignedUrl(uuid, fileUuid, expiresInSeconds, isZip = false) {
   return signedUrl;
 }
 
-function verifySignedUrl(uuid, expires, signature) {
+function verifySignedUrl(uuid: string, expires: number, signature: string) {
   const now = Math.floor(Date.now() / 1000);
 
   if (now > expires) return false;
@@ -478,8 +576,8 @@ function verifySignedUrl(uuid, expires, signature) {
   );
 }
 
-async function getShareInfo(share, res) {
-  const files = [];
+async function getShareInfo(share: sharesDb.IShareDTO, res: Response) {
+  const files: IFileDetails[] = [];
   let totalSize = 0;
 
   for (const { file_path, uuid } of share.files) {
@@ -497,11 +595,11 @@ async function getShareInfo(share, res) {
     }
     const filename = basename(resolvedPath);
     totalSize += stat.size;
-    const displayName = share.maskFilenames
+    const displayName: string = share.maskFilenames
       ? maskedFilename(share.uuid, filename, files.length)
       : filename;
 
-    const fileDetails = {
+    const fileDetails: IFileDetails = {
       filename: displayName,
       // path: file_path,
       uuid: uuid,
@@ -520,10 +618,12 @@ async function getShareInfo(share, res) {
   }
 
   const isSingle = files.length === 1;
+  const singleFile = isSingle ? files[0] : null;
   const shareTitle =
-    share.name || (isSingle ? files[0].filename : `${files.length} files`);
+    share.name ||
+    (singleFile ? singleFile.filename : `${files.length} files`);
 
-  const shareDetais = {
+  const shareDetais: IShareDetails = {
     shareTitle,
     shareName: share.name,
     maskFilenames: share.maskFilenames,

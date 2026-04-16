@@ -61,12 +61,12 @@ describe("resolveSafePath", () => {
       ).toThrow();
     });
 
-    test("missing traversal targets return status 400", () => {
+    test("missing traversal targets return status 'Invalid path.'", () => {
       expect(() => resolveSafePath("../../outside")).toThrowError();
       try {
         resolveSafePath("../../outside");
       } catch (err) {
-        expect(err.status).toBe(400);
+        expect(err.message).toBe("Invalid path.");
       }
     });
 
@@ -88,11 +88,11 @@ describe("resolveSafePath", () => {
       expect(() => resolveSafePath(42)).toThrow();
     });
 
-    test("thrown error has status 400 for non-string", () => {
+    test("thrown error has status 'Path must be a string.' for non-string", () => {
       try {
         resolveSafePath(null);
       } catch (err) {
-        expect(err.status).toBe(400);
+        expect(err.message).toBe("Path must be a string.");
       }
     });
 

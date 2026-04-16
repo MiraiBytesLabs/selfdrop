@@ -1,15 +1,18 @@
 {
   "name": "selfdrop-backend",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SelfDrop — Share files directly from your own server.",
   "type": "module",
-  "main": "src/app.js",
+  "main": "dist/app.js",
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
+    "clean": "node -e \"const { rmSync } = require('node:fs'); rmSync('dist', { recursive: true, force: true });\"",
+    "dev": "npx tsx watch src/app.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "start": "node dist/app.js",
     "test": "vitest run --reporter=verbose",
     "test:watch": "vitest --reporter=verbose",
     "test:coverage": "vitest run --coverage"
@@ -23,9 +26,19 @@
     "mime-types": "^2.1.35"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^25.5.2",
     "@vitest/coverage-v8": "^4.1.0",
     "nodemon": "^3.1.0",
     "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.8.1",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.0"
   }
 }

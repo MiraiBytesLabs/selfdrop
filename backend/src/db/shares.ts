@@ -1,7 +1,50 @@
 import db from "./index.js";
 import { generateToken } from "../utils/token.js";
 
-export const createShare = db.transaction((params) => {
+type CreateShareParams = {
+  uuid: string;
+  filePaths: string[];
+  expiresAt: string;
+  downloadLimit: number | null;
+  passwordHash: string | null;
+  maskFilenames: boolean;
+  name: string | null;
+};
+
+export interface IShareRow {
+  id: number;
+  uuid: string;
+  download_limit: number | null;
+  download_count: number;
+  password_hash: string | null;
+  expires_at: string;
+  created_at: string;
+  mask_filenames: number;
+  name: string | null;
+}
+
+export interface IFileDTO {
+  uuid: string;
+  file_path: string;
+}
+
+export interface IShareSummary
+  extends Omit<IShareRow, "password_hash" | "mask_filenames"> {
+  password_hash?: undefined;
+  hasPassword: boolean;
+  maskFilenames: boolean;
+}
+
+export interface IShareDTO extends IShareSummary {
+  files: IFileDTO[];
+  filePaths: string[];
+}
+
+export type ValidateShareResult =
+  | { valid: false; reason: "not_found" | "expired" | "limit_reached" }
+  | { valid: true; share: IShareDTO };
+
+export const createShare = db.transaction((params: CreateShareParams) => {
   const {
     uuid,
     filePaths,
@@ -36,38 +79,42 @@ export const createShare = db.transaction((params) => {
     insertFile.run({ shareId: lastInsertRowid, filePath, fileUUID });
   }
 
-  return getShareById(lastInsertRowid);
+  return getShareById(Number(lastInsertRowid));
 });
 
-export function getShareById(id) {
-  const share = db.prepare("SELECT * FROM shares WHERE id = ?").get(id);
+export function getShareById(id: number): IShareSummary | null {
+  const share = db
+    .prepare("SELECT * FROM shares WHERE id = ?")
+    .get(id) as IShareRow | undefined;
   return share ? attachFiles(share, false) : null;
 }
 
-export function getShareByUuid(uuid) {
-  const share = db.prepare("SELECT * FROM shares WHERE uuid = ?").get(uuid);
+export function getShareByUuid(uuid: string): IShareDTO | null {
+  const share = db
+    .prepare("SELECT * FROM shares WHERE uuid = ?")
+    .get(uuid) as IShareRow | undefined;
   return share ? attachFiles(share) : null;
 }
 
-export function listShares() {
+export function listShares(): IShareDTO[] {
   return db
     .prepare("SELECT * FROM shares ORDER BY created_at DESC")
     .all()
-    .map(attachFiles);
+    .map((share) => attachFiles(share as IShareRow));
 }
 
-export function incrementDownloadCount(uuid) {
+export function incrementDownloadCount(uuid: string) {
   db.prepare(
     "UPDATE shares SET download_count = download_count + 1 WHERE uuid = ?",
   ).run(uuid);
 }
 
-export function deleteShare(uuid) {
+export function deleteShare(uuid: string): boolean {
   const { changes } = db.prepare("DELETE FROM shares WHERE uuid = ?").run(uuid);
   return changes > 0;
 }
 
-export function validateShare(uuid) {
+export function validateShare(uuid: string): ValidateShareResult {
   const share = getShareByUuid(uuid);
   if (!share) return { valid: false, reason: "not_found" };
   if (new Date() > new Date(share.expires_at))
@@ -81,14 +128,19 @@ export function validateShare(uuid) {
   return { valid: true, share };
 }
 
-function attachFiles(share, sendFileDetails = true) {
+function attachFiles(share: IShareRow, sendFileDetails: false): IShareSummary;
+function attachFiles(share: IShareRow, sendFileDetails?: true): IShareDTO;
+function attachFiles(
+  share: IShareRow,
+  sendFileDetails = true,
+): IShareSummary | IShareDTO {
   const files = db
     .prepare(
       "SELECT file_path, uuid FROM share_files WHERE share_id = ? ORDER BY id ASC",
     )
-    .all(share.id);
+    .all(share.id) as IFileDTO[];
 
-  let shareDetails = {
+  const shareDetails: IShareSummary = {
     ...share,
     password_hash: undefined,
     hasPassword: share.password_hash !== null,
@@ -97,10 +149,10 @@ function attachFiles(share, sendFileDetails = true) {
   };
 
   if (sendFileDetails) {
-    shareDetails = {
+    return {
       ...shareDetails,
       filePaths: files.map((f) => f.file_path),
-      files: files,
+      files,
     };
   }
 

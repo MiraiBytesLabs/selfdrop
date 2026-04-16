@@ -6,7 +6,7 @@ export default defineConfig({
     include: ["tests/**/*.test.js"],
 
     // Each test file runs in its own worker with a fresh module registry.
-    // This is critical because config.js reads env vars at import time —
+    // This is critical because config.ts reads env vars at import time —
     // without isolation, a cached config from one test file bleeds into another.
     pool: "forks",
     poolOptions: {

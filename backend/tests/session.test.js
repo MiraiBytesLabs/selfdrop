@@ -51,11 +51,11 @@ describe("verifyToken", () => {
     expect(() => verifyToken("a.b.c.d")).toThrow();
   });
 
-  test("throws with status 401", () => {
+  test("throws with status 'Invalid token signature.'", () => {
     try {
       verifyToken("invalid.token.here");
     } catch (err) {
-      expect(err.status).toBe(401);
+      expect(err.message).toBe("Invalid token signature.");
     }
   });
 

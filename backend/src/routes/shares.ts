@@ -5,12 +5,21 @@ import { generateToken } from "../utils/token.js";
 import { resolveSafePath } from "../middleware/pathGuard.js";
 import * as sharesDb from "../db/shares.js";
 
+export interface IPayloadBody {
+  filePaths: string;
+  expiresAt: string;
+  downloadLimit: string;
+  password: string;
+  maskFilenames: boolean | number;
+  name: string;
+}
+
 const router = Router();
 const BCRYPT_ROUNDS = 10;
 
 // ── Helpers ───────────────────────────────────────────────
 
-function validateCreatePayload(body) {
+function validateCreatePayload(body: IPayloadBody) {
   const { filePaths, expiresAt, downloadLimit, password, maskFilenames, name } =
     body;
 
@@ -50,13 +59,17 @@ function validateCreatePayload(body) {
   };
 }
 
-function verifyFilePaths(filePaths) {
+function verifyFilePaths(filePaths: string[]) {
   for (const filePath of filePaths) {
     let resolved;
     try {
       resolved = resolveSafePath(filePath);
     } catch (err) {
-      return err.message;
+      if (err instanceof Error) {
+        return err.message;
+      } else {
+        return "Unknown Error Occurred.";
+      }
     }
     try {
       const stat = statSync(resolved);
@@ -69,7 +82,7 @@ function verifyFilePaths(filePaths) {
   return null;
 }
 
-function formatShare(share) {
+function formatShare(share: sharesDb.IShareDTO) {
   const now = new Date();
   const isExpired = now > new Date(share.expires_at);
   const isLimitReached =
@@ -97,6 +110,8 @@ router.post("/", async (req, res) => {
   const { error, data } = validateCreatePayload(req.body);
   if (error) return res.status(400).json({ error });
 
+  if (!data) return res.status(400).json({ error: "Unknown Error Occured." });
+
   const pathError = verifyFilePaths(data.filePaths);
   if (pathError) return res.status(400).json({ error: pathError });
 
@@ -112,7 +127,7 @@ router.post("/", async (req, res) => {
       maskFilenames: data.maskFilenames,
       name: data.name,
       passwordHash,
-    });
+    }) as sharesDb.IShareDTO;
     res.status(201).json(formatShare(share));
   } catch (err) {
     console.error("[shares] create error:", err);

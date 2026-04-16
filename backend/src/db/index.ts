@@ -37,7 +37,7 @@ db.exec(`
 `);
 
 // ── Migrations ────────────────────────────────────────────
-const migrations = [
+const migrations: string[] = [
   `ALTER TABLE shares ADD COLUMN mask_filenames INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE shares ADD COLUMN name TEXT`,
   `CREATE TABLE IF NOT EXISTS settings (

@@ -27,7 +27,7 @@
 
   <!-- v0.1.0 badge -->
   <rect x="620" y="294" width="140" height="34" fill="#1a2e22" rx="6"/>
-  <text x="690" y="317" font-family="'IBM Plex Mono', 'Courier New', monospace" font-size="17" fill="#4a9e74" text-anchor="middle" letter-spacing="1">v0.1.0</text>
+  <text x="690" y="317" font-family="'IBM Plex Mono', 'Courier New', monospace" font-size="17" fill="#4a9e74" text-anchor="middle" letter-spacing="1">v0.1.1</text>
 
   <!-- Node badge -->
   <rect x="774" y="294" width="168" height="34" fill="#1a1917" rx="6"/>

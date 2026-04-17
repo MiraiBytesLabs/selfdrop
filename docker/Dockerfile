@@ -32,8 +32,9 @@ RUN npm run build
 FROM node:24-alpine AS backend-build
 WORKDIR /build/backend
 COPY backend/package.json backend/package-lock.json* ./
-RUN npm ci --omit=dev
-COPY backend/src ./src
+RUN npm ci
+COPY backend/ .
+RUN npm run build
 
 # ── Stage 3: Final image ──────────────────────────────────
 FROM node:24-alpine
@@ -51,9 +52,12 @@ RUN mkdir -p /app/frontend /app/backend /data/files /data/db /run/nginx /tmp/sel
 COPY --from=frontend-build /build/frontend/dist /app/frontend
 
 # Copy backend
-COPY --from=backend-build /build/backend/node_modules /app/backend/node_modules
-COPY --from=backend-build /build/backend/src /app/backend/src
-COPY backend/package.json /app/backend/package.json
+WORKDIR /app/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=backend-build /build/backend/dist ./dist
+
+WORKDIR /
 
 # Nginx config
 COPY docker/nginx.conf /etc/nginx/nginx.conf

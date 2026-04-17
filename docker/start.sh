@@ -24,7 +24,7 @@ mkdir -p /data/db
 
 # ── Start Node backend ────────────────────────────────────
 echo "Starting Node backend on port ${PORT:-3000}..."
-node /app/backend/src/app.js &
+node /app/backend/dist/app.js &
 NODE_PID=$!
 
 # Wait for Node to be ready before starting the proxy
